@@ -1,0 +1,32 @@
+[project]
+name = "rpa-consultador"
+version = "0.1.0"
+description = "RPA que consulta pólizas en portal MetLife y devuelve screenshots y PDF"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "playwright",
+    "pydantic",
+    "pydantic-settings",
+    "pillow",
+    "img2pdf",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.uv]
+package = false
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

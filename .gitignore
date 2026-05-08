@@ -1,0 +1,11 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+output/
+CLAUDE.md
+TAREAS.md
+PLAN.md
+Diagrama_Proceso.md
