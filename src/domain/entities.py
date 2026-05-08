@@ -22,3 +22,4 @@ class ConsultaRequest:
     identificador: str
     tipo: TipoIdentificador
     pestanas: list[Pestana]
+    numero_telefono: str

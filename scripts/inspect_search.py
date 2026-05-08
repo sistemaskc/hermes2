@@ -4,12 +4,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
 
 from src.adapters.outbound.playwright_consultador import PlaywrightConsultadorAdapter
+from src.config import settings
 
 OUTPUT = Path("output/debug")
 OUTPUT.mkdir(parents=True, exist_ok=True)
@@ -17,8 +14,8 @@ OUTPUT.mkdir(parents=True, exist_ok=True)
 
 async def main():
     adapter = PlaywrightConsultadorAdapter(
-        usuario=os.getenv("METLIFE_USUARIO", ""),
-        password=os.getenv("METLIFE_PASSWORD", ""),
+        usuario=settings.metlife_usuario,
+        password=settings.metlife_password,
         headless=False,
     )
     await adapter.inicializar()

@@ -37,6 +37,7 @@ async def consultar(
             identificador=body.identificador,
             tipo=body.tipo,
             pestanas=body.pestanas,
+            numero_telefono=body.numero_telefono,
         )
         polizas = await use_case.execute(dominio_request)
     except PortalNoDisponibleError as e:

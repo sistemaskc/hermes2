@@ -7,12 +7,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
 
 from src.adapters.outbound.playwright_consultador import PlaywrightConsultadorAdapter
+from src.config import settings
 from src.domain.value_objects import TipoIdentificador, Pestana, expandir_pestanas
 
 OUTPUT = Path("output/debug")
@@ -20,16 +17,15 @@ OUTPUT.mkdir(parents=True, exist_ok=True)
 
 
 async def main():
-    adapter = PlaywrightConsultadorAdapter(
-        usuario=os.getenv("METLIFE_USUARIO", ""),
-        password=os.getenv("METLIFE_PASSWORD", ""),
-        headless=False,
-    )
-
-    poliza = os.getenv("POLIZA_PRUEBA", "")
-    if not poliza:
+    if not settings.poliza_prueba:
         print("ERROR: POLIZA_PRUEBA requerida en .env")
         return
+
+    adapter = PlaywrightConsultadorAdapter(
+        usuario=settings.metlife_usuario,
+        password=settings.metlife_password,
+        headless=False,
+    )
 
     print("Inicializando browser...")
     await adapter.inicializar()
@@ -43,8 +39,8 @@ async def main():
         await adapter.ir_a_busqueda()
         print(f"  URL: {adapter._page.url}")
 
-        print(f"Paso 3: Buscar póliza {poliza}...")
-        await adapter.buscar(poliza, TipoIdentificador.POLIZA)
+        print(f"Paso 3: Buscar póliza {settings.poliza_prueba}...")
+        await adapter.buscar(settings.poliza_prueba, TipoIdentificador.POLIZA)
         await adapter._page.screenshot(path=str(OUTPUT / "03_post_buscar.png"), full_page=True)
         print(f"  URL: {adapter._page.url}")
 

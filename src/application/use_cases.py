@@ -49,7 +49,7 @@ class ConsultarPolizaUseCase:
 
         for i, numero in enumerate(numeros):
             poliza = await self._procesar_poliza(
-                numero, request.identificador, pestanas
+                numero, request.identificador, pestanas, request.numero_telefono
             )
             polizas.append(poliza)
             if i < len(numeros) - 1:
@@ -60,7 +60,7 @@ class ConsultarPolizaUseCase:
         await self._consultador.volver_a_consultador()
         return polizas
 
-    async def _procesar_poliza(self, numero, identificador, pestanas) -> Poliza:
+    async def _procesar_poliza(self, numero, identificador, pestanas, numero_telefono) -> Poliza:
         logger.info("Abriendo poliza %s", numero)
         await self._consultador.abrir_poliza(numero)
 
@@ -80,7 +80,7 @@ class ConsultarPolizaUseCase:
                     "Error capturando %s en poliza %s: %s", pestana.value, numero, e
                 )
 
-        ruta_pdf = self._storage.generar_pdf(identificador, numero)
+        ruta_pdf = self._storage.generar_pdf(identificador, numero, numero_telefono)
         logger.info("PDF generado: %s", ruta_pdf)
 
         return Poliza(numero=numero, capturas=capturas, ruta_pdf=ruta_pdf)

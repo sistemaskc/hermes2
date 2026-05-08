@@ -8,33 +8,37 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
 import logging
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 from src.adapters.outbound.playwright_consultador import PlaywrightConsultadorAdapter
 from src.adapters.outbound.local_storage import LocalStorageAdapter
 from src.application.session_manager import SessionManager
 from src.application.use_cases import ConsultarPolizaUseCase
+from src.config import settings
 from src.domain.entities import ConsultaRequest
 from src.domain.value_objects import TipoIdentificador, Pestana
 
 
 async def main():
-    poliza = os.getenv("POLIZA_PRUEBA", "")
-    if not poliza:
+    if not settings.poliza_prueba:
         print("ERROR: POLIZA_PRUEBA requerida en .env")
+        return
+    if not settings.telefono_prueba:
+        print("ERROR: TELEFONO_PRUEBA requerida en .env")
         return
 
     adapter = PlaywrightConsultadorAdapter(
-        usuario=os.getenv("METLIFE_USUARIO", ""),
-        password=os.getenv("METLIFE_PASSWORD", ""),
+        usuario=settings.metlife_usuario,
+        password=settings.metlife_password,
         headless=False,
     )
-    storage = LocalStorageAdapter(output_dir=Path("output"))
-    manager = SessionManager(consultador=adapter, heartbeat_interval=240, max_reintentos=3)
+    storage = LocalStorageAdapter(output_dir=settings.output_dir)
+    manager = SessionManager(
+        consultador=adapter,
+        heartbeat_interval=settings.heartbeat_interval,
+        max_reintentos=settings.max_reintentos,
+    )
     use_case = ConsultarPolizaUseCase(
         session_manager=manager,
         consultador=adapter,
@@ -46,9 +50,10 @@ async def main():
 
     try:
         request = ConsultaRequest(
-            identificador=poliza,
+            identificador=settings.poliza_prueba,
             tipo=TipoIdentificador.POLIZA,
             pestanas=[Pestana.TODO],
+            numero_telefono=settings.telefono_prueba,
         )
 
         print(f"Ejecutando consulta: {poliza} - todas las pestanas...")

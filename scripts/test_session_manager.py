@@ -8,21 +8,19 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
 import logging
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 from src.adapters.outbound.playwright_consultador import PlaywrightConsultadorAdapter
 from src.application.session_manager import SessionManager
+from src.config import settings
 from src.domain.ports import EstadoSesion
 
 
 async def main():
     adapter = PlaywrightConsultadorAdapter(
-        usuario=os.getenv("METLIFE_USUARIO", ""),
-        password=os.getenv("METLIFE_PASSWORD", ""),
+        usuario=settings.metlife_usuario,
+        password=settings.metlife_password,
         headless=False,
     )
     manager = SessionManager(

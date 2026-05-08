@@ -55,13 +55,13 @@ def test_generar_pdf_crea_archivo(storage: LocalStorageAdapter, tmp_path: Path):
     storage.guardar_captura("RFC123", "POL001", Pestana.GENERAL, png_bytes("red"))
     storage.guardar_captura("RFC123", "POL001", Pestana.COBERTURAS, png_bytes("blue"))
 
-    ruta_pdf = storage.generar_pdf("RFC123", "POL001")
+    ruta_pdf = storage.generar_pdf("RFC123", "POL001", "5512345678")
 
     assert ruta_pdf.exists()
-    assert ruta_pdf.name == "POL001.pdf"
+    assert ruta_pdf.name == "POL001_5512345678.pdf"
     assert ruta_pdf.stat().st_size > 0
 
 
 def test_generar_pdf_sin_capturas_lanza_error(storage: LocalStorageAdapter):
     with pytest.raises(FileNotFoundError):
-        storage.generar_pdf("RFC_VACIO", "POL_INEXISTENTE")
+        storage.generar_pdf("RFC_VACIO", "POL_INEXISTENTE", "5512345678")

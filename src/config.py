@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     max_reintentos: int = 3
     host: str = "0.0.0.0"
     port: int = 8000
+    poliza_prueba: str = ""
+    telefono_prueba: str = ""
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

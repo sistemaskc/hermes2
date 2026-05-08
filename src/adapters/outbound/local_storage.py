@@ -40,14 +40,14 @@ class LocalStorageAdapter(StoragePort):
                 rutas.append(ruta)
         return rutas
 
-    def generar_pdf(self, identificador: str, numero_poliza: str) -> Path:
+    def generar_pdf(self, identificador: str, numero_poliza: str, numero_telefono: str) -> Path:
         capturas = self.listar_capturas(identificador, numero_poliza)
         if not capturas:
             raise FileNotFoundError(
                 f"Sin capturas para {numero_poliza} en {identificador}"
             )
 
-        ruta_pdf = self._base / identificador / f"{numero_poliza}.pdf"
+        ruta_pdf = self._base / identificador / f"{numero_poliza}_{numero_telefono}.pdf"
         with open(ruta_pdf, "wb") as f:
             f.write(img2pdf.convert([str(p) for p in capturas]))
 

@@ -23,7 +23,8 @@ Ejecuta búsqueda en portal MetLife y devuelve rutas de screenshots capturados.
 {
   "identificador": "XXXXXXXXXXXXX",
   "tipo": "RFC",
-  "pestanas": ["general", "coberturas"]
+  "pestanas": ["general", "coberturas"],
+  "numero_telefono": "5512345678"
 }
 ```
 
@@ -32,6 +33,7 @@ Ejecuta búsqueda en portal MetLife y devuelve rutas de screenshots capturados.
 | `identificador` | `string` | Sí | — | RFC o número de póliza |
 | `tipo` | `"RFC"` \| `"POLIZA"` | No | `"POLIZA"` | Tipo de búsqueda |
 | `pestanas` | `array[string]` | No | `["todo"]` | Pestañas a capturar |
+| `numero_telefono` | `string` | Sí | — | Teléfono a 10 dígitos. Se eliminan espacios, `+` y otros no-dígitos automáticamente. |
 
 **Valores válidos de `pestanas`:**
 
@@ -63,7 +65,7 @@ Ejecuta búsqueda en portal MetLife y devuelve rutas de screenshots capturados.
           "ruta_archivo": "output\\<RFC>\\<poliza>_coberturas.png"
         }
       ],
-      "ruta_pdf": "output\\<RFC>\\<poliza>.pdf"
+      "ruta_pdf": "output\\<RFC>\\<poliza>_<telefono>.pdf"
     }
   ]
 }
@@ -167,7 +169,7 @@ Estado actual de la sesión.
 ```bash
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXXXXXXXXX", "tipo": "RFC", "pestanas": ["todo"]}' \
+  -d '{"identificador": "XXXXXXXXXXXXX", "tipo": "RFC", "pestanas": ["todo"], "numero_telefono": "5512345678"}' \
   --max-time 300
 ```
 
@@ -176,7 +178,7 @@ curl -X POST http://localhost:8000/consultar \
 ```bash
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXX", "tipo": "POLIZA", "pestanas": ["general", "beneficiarios"]}' \
+  -d '{"identificador": "XXXXXX", "tipo": "POLIZA", "pestanas": ["general", "beneficiarios"], "numero_telefono": "5512345678"}' \
   --max-time 300
 ```
 

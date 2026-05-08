@@ -9,36 +9,37 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
 import logging
-from dotenv import load_dotenv
-import os
 import json
 
-load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 from src.adapters.outbound.playwright_consultador import PlaywrightConsultadorAdapter
 from src.application.session_manager import SessionManager
+from src.config import settings
 from src.domain.value_objects import TipoIdentificador, Pestana
 
 
 async def main():
-    poliza = os.getenv("POLIZA_PRUEBA", "")
-    if not poliza:
+    if not settings.poliza_prueba:
         print("ERROR: POLIZA_PRUEBA requerida en .env")
         return
 
     adapter = PlaywrightConsultadorAdapter(
-        usuario=os.getenv("METLIFE_USUARIO", ""),
-        password=os.getenv("METLIFE_PASSWORD", ""),
+        usuario=settings.metlife_usuario,
+        password=settings.metlife_password,
         headless=False,
     )
-    manager = SessionManager(consultador=adapter, heartbeat_interval=240, max_reintentos=3)
+    manager = SessionManager(
+        consultador=adapter,
+        heartbeat_interval=settings.heartbeat_interval,
+        max_reintentos=settings.max_reintentos,
+    )
 
     await manager.startup()
 
     try:
         await adapter.ir_a_busqueda()
-        await adapter.buscar(poliza, TipoIdentificador.POLIZA)
+        await adapter.buscar(settings.poliza_prueba, TipoIdentificador.POLIZA)
         await adapter.confirmar_dialogo()
         numeros = await adapter.obtener_polizas_resultado()
         print(f"Polizas: {numeros}")
