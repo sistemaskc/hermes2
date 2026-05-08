@@ -24,7 +24,8 @@ class LocalStorageAdapter(StoragePort):
         ruta = directorio / f"{numero_poliza}_{pestana.value}.png"
 
         img = Image.open(io.BytesIO(datos))
-        img = img.crop((0, 0, img.width, img.height - 60))
+        if img.height > 150:
+            img = img.crop((0, 0, img.width, img.height - 150))
         img = img.convert("L")
         img.save(ruta, format="PNG")
 
