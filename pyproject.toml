@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings",
     "pillow",
     "img2pdf",
+    "colorama",
 ]
 
 [dependency-groups]

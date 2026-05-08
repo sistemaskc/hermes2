@@ -1,12 +1,9 @@
-import logging
-
 from src.application.session_manager import SessionManager
 from src.domain.entities import Captura, ConsultaRequest, Poliza
 from src.domain.exceptions import PortalNoDisponibleError
 from src.domain.ports import ConsultadorPort, StoragePort
 from src.domain.value_objects import expandir_pestanas
-
-logger = logging.getLogger(__name__)
+from src.infrastructure.logger import logger
 
 
 class ConsultarPolizaUseCase:
@@ -32,42 +29,42 @@ class ConsultarPolizaUseCase:
     async def _procesar(self, request: ConsultaRequest) -> list[Poliza]:
         pestanas = expandir_pestanas(request.pestanas)
         logger.info(
-            "Procesando %s=%s pestanas=%s",
-            request.tipo.value,
-            request.identificador,
-            [p.value for p in pestanas],
+            "ConsultarPolizaUseCase",
+            f"Procesando {request.tipo.value}={request.identificador} pestanas={[p.value for p in pestanas]}",
         )
 
-        await self._consultador.ir_a_busqueda()
-        await self._consultador.buscar(request.identificador, request.tipo)
-        await self._consultador.confirmar_dialogo()
+        try:
+            await self._consultador.ir_a_busqueda()
+            await self._consultador.buscar(request.identificador, request.tipo)
+            await self._consultador.confirmar_dialogo()
 
-        numeros = await self._consultador.obtener_polizas_resultado()
-        logger.info("Polizas encontradas: %s", numeros)
+            numeros = await self._consultador.obtener_polizas_resultado()
+            logger.info("ConsultarPolizaUseCase", f"Pólizas encontradas: {numeros}")
 
-        polizas: list[Poliza] = []
+            polizas: list[Poliza] = []
 
-        for i, numero in enumerate(numeros):
-            poliza = await self._procesar_poliza(
-                numero, request.identificador, pestanas, request.numero_telefono
-            )
-            polizas.append(poliza)
-            if i < len(numeros) - 1:
-                await self._consultador.ir_a_busqueda()
-                await self._consultador.buscar(request.identificador, request.tipo)
-                await self._consultador.confirmar_dialogo()
+            for i, numero in enumerate(numeros):
+                poliza = await self._procesar_poliza(
+                    numero, request.identificador, pestanas, request.numero_telefono
+                )
+                polizas.append(poliza)
+                if i < len(numeros) - 1:
+                    await self._consultador.ir_a_busqueda()
+                    await self._consultador.buscar(request.identificador, request.tipo)
+                    await self._consultador.confirmar_dialogo()
 
-        await self._consultador.volver_a_consultador()
-        return polizas
+            return polizas
+        finally:
+            await self._consultador.volver_a_consultador()
 
     async def _procesar_poliza(self, numero, identificador, pestanas, numero_telefono) -> Poliza:
-        logger.info("Abriendo poliza %s", numero)
+        logger.info("ConsultarPolizaUseCase", f"Abriendo póliza {numero}")
         await self._consultador.abrir_poliza(numero)
 
         capturas: list[Captura] = []
 
         for pestana in pestanas:
-            logger.info("Capturando pestana %s de poliza %s", pestana.value, numero)
+            logger.info("ConsultarPolizaUseCase", f"Capturando pestaña {pestana.value} de póliza {numero}")
             try:
                 await self._consultador.navegar_pestana(pestana)
                 datos = await self._consultador.capturar_screenshot()
@@ -76,11 +73,9 @@ class ConsultarPolizaUseCase:
                 )
                 capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
             except Exception as e:
-                logger.error(
-                    "Error capturando %s en poliza %s: %s", pestana.value, numero, e
-                )
+                logger.error("ConsultarPolizaUseCase", f"Error capturando {pestana.value} en póliza {numero}: {e}")
 
         ruta_pdf = self._storage.generar_pdf(identificador, numero, numero_telefono)
-        logger.info("PDF generado: %s", ruta_pdf)
+        logger.info("ConsultarPolizaUseCase", f"PDF generado: {ruta_pdf}")
 
         return Poliza(numero=numero, capturas=capturas, ruta_pdf=ruta_pdf)

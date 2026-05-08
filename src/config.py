@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     max_reintentos: int = 3
     host: str = "0.0.0.0"
     port: int = 8000
+    log_level: str = "INFO"
+    log_dir: Path = Path("logs")
     poliza_prueba: str = ""
     telefono_prueba: str = ""
 

@@ -1,11 +1,9 @@
 import asyncio
-import logging
 
 from playwright.async_api import Page
 
 from src.domain.exceptions import PortalNoDisponibleError, SesionExpiradaError
-
-logger = logging.getLogger(__name__)
+from src.infrastructure.logger import logger
 
 DOMINIO_PORTAL = "providaweb.metlife.mx"
 DOMINIO_SSO = "federate.sso.metlife.com"
@@ -54,7 +52,7 @@ class LoginPage:
 
         # Ya está en el portal — login sin OTP
         if DOMINIO_PORTAL in self._page.url:
-            logger.info("Login exitoso sin OTP")
+            logger.info("LoginPage", "Login exitoso sin OTP")
             return
 
         # Detectar error de credenciales — buscar elemento de error sin leer page.content()
@@ -74,8 +72,9 @@ class LoginPage:
 
         # Sigue en SSO — puede ser selección de método o ingreso de OTP
         logger.warning(
+            "LoginPage",
             f"Posible OTP requerido. URL: {self._page.url} — "
-            f"esperando hasta {self.OTP_TIMEOUT_SEGUNDOS}s para que el usuario complete el proceso"
+            f"esperando hasta {self.OTP_TIMEOUT_SEGUNDOS}s para que el usuario complete el proceso",
         )
 
         # Auto-seleccionar correo electrónico si aparece pantalla de selección de método
@@ -87,7 +86,7 @@ class LoginPage:
             await asyncio.sleep(intervalo)
             transcurrido += intervalo
             if DOMINIO_PORTAL in self._page.url:
-                logger.info(f"Login completado tras OTP ({transcurrido}s)")
+                logger.info("LoginPage", f"Login completado tras OTP ({transcurrido}s)")
                 return
 
         raise PortalNoDisponibleError(
@@ -105,7 +104,7 @@ class LoginPage:
             if boton_email:
                 await boton_email.click()
                 await self._page.wait_for_load_state("networkidle")
-                logger.info("Método OTP seleccionado: Correo electrónico. Esperando código del usuario.")
+                logger.info("LoginPage", "Método OTP seleccionado: Correo electrónico. Esperando código del usuario.")
         except Exception:
             # Pantalla de selección no presente — ya está en pantalla de ingreso de código u otra
             pass

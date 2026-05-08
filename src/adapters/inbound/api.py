@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from src.adapters.inbound.schemas import (
@@ -11,8 +9,7 @@ from src.adapters.inbound.schemas import (
 from src.application.use_cases import ConsultarPolizaUseCase
 from src.domain.entities import ConsultaRequest
 from src.domain.exceptions import PolizaNoEncontradaError, PortalNoDisponibleError
-
-logger = logging.getLogger(__name__)
+from src.infrastructure.logger import logger
 
 router = APIRouter()
 
@@ -45,7 +42,7 @@ async def consultar(
     except PolizaNoEncontradaError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except Exception as e:
-        logger.exception("Error inesperado en consulta %s", body.identificador)
+        logger.error("API", f"Error inesperado en consulta {body.identificador}: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
     return ConsultaResponseSchema(

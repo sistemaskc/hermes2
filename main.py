@@ -1,6 +1,4 @@
-import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
@@ -11,11 +9,7 @@ from src.adapters.outbound.playwright_consultador import PlaywrightConsultadorAd
 from src.application.session_manager import SessionManager
 from src.application.use_cases import ConsultarPolizaUseCase
 from src.config import settings
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(name)s %(message)s",
-)
+from src.infrastructure.logger import logger
 
 
 @asynccontextmanager
@@ -43,6 +37,7 @@ async def lifespan(app: FastAPI):
     await manager.startup()
     yield
     await manager.shutdown()
+    logger.close()
 
 
 app = FastAPI(title="RPA Consultador MetLife", lifespan=lifespan)

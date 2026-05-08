@@ -1,11 +1,9 @@
 import asyncio
-import logging
 from contextlib import asynccontextmanager
 
-from src.domain.ports import ConsultadorPort, EstadoSesion
 from src.domain.exceptions import PortalNoDisponibleError
-
-logger = logging.getLogger(__name__)
+from src.domain.ports import ConsultadorPort, EstadoSesion
+from src.infrastructure.logger import logger
 
 
 class SessionManager:
@@ -31,7 +29,7 @@ class SessionManager:
         await self._consultador.inicializar()
         await self._login_con_reintentos()
         self._heartbeat_task = asyncio.create_task(self._heartbeat_loop())
-        logger.info("SessionManager arrancado. Heartbeat cada %ds.", self._heartbeat_interval)
+        logger.info("SessionManager", f"Arrancado. Heartbeat cada {self._heartbeat_interval}s.")
 
     async def shutdown(self) -> None:
         if self._heartbeat_task:
@@ -41,7 +39,7 @@ class SessionManager:
             except asyncio.CancelledError:
                 pass
         await self._consultador.cerrar()
-        logger.info("SessionManager cerrado.")
+        logger.info("SessionManager", "Cerrado.")
 
     # ------------------------------------------------------------------
     # Lock (un request a la vez)
@@ -79,19 +77,19 @@ class SessionManager:
             if self._estado == EstadoSesion.PROCESSING:
                 continue
             self._estado = EstadoSesion.HEARTBEATING
-            logger.debug("Heartbeat: verificando sesión...")
+            logger.debug("SessionManager", "Heartbeat: verificando sesión...")
             try:
                 activa = await self._consultador.heartbeat()
                 if activa:
                     self._estado = EstadoSesion.ACTIVE
-                    logger.debug("Heartbeat OK — sesión activa.")
+                    logger.debug("SessionManager", "Heartbeat OK — sesión activa.")
                 else:
-                    logger.warning("Heartbeat: sesión expirada. Re-login...")
+                    logger.warning("SessionManager", "Heartbeat: sesión expirada. Re-login...")
                     await self._re_login()
             except asyncio.CancelledError:
                 raise
             except Exception as e:
-                logger.error("Heartbeat error: %s", e)
+                logger.error("SessionManager", f"Heartbeat error: {e}")
                 await self._re_login()
 
     # ------------------------------------------------------------------
@@ -105,17 +103,15 @@ class SessionManager:
         self._estado = EstadoSesion.REINITIALIZING
         for intento in range(1, self._max_reintentos + 1):
             try:
-                logger.info("Re-login intento %d/%d...", intento, self._max_reintentos)
+                logger.info("SessionManager", f"Re-login intento {intento}/{self._max_reintentos}...")
                 await self._consultador.login()
                 self._estado = EstadoSesion.ACTIVE
-                logger.info("Re-login exitoso en intento %d.", intento)
+                logger.info("SessionManager", f"Re-login exitoso en intento {intento}.")
                 return
             except Exception as e:
-                logger.error("Re-login intento %d fallido: %s", intento, e)
+                logger.error("SessionManager", f"Re-login intento {intento} fallido: {e}")
                 if intento < self._max_reintentos:
                     await asyncio.sleep(5)
 
         self._estado = EstadoSesion.ERROR
-        logger.critical(
-            "Re-login fallido tras %d intentos. Servicio degradado.", self._max_reintentos
-        )
+        logger.error("SessionManager", f"Re-login fallido tras {self._max_reintentos} intentos. Servicio degradado.")
