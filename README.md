@@ -63,22 +63,22 @@ Ver [API_CONTRACT.md](API_CONTRACT.md) para el contrato completo.
 # Verificar estado
 curl http://localhost:8000/health
 
-# Consultar por RFC, todas las pestañas
+# Consultar por RFC, todas las pestañas (tipo se infiere por longitud ≥10)
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXXXXXXXXX", "tipo": "RFC", "pestanas": ["todo"]}' \
+  -d '{"identificador": "XXXXXXXXXXXXX", "pestanas": ["todo"], "numero_telefono": "5512345678"}' \
   --max-time 300
 
-# Consultar por póliza, todas las pestañas
+# Consultar por póliza, todas las pestañas (tipo se infiere por longitud 6)
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXX", "tipo": "POLIZA", "pestanas": ["todo"]}' \
+  -d '{"identificador": "XXXXXX", "pestanas": ["todo"], "numero_telefono": "5512345678"}' \
   --max-time 300
 
 # Consultar por póliza, pestañas específicas
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXX", "tipo": "POLIZA", "pestanas": ["general", "beneficiarios"]}' \
+  -d '{"identificador": "XXXXXX", "pestanas": ["general", "beneficiarios"], "numero_telefono": "5512345678"}' \
   --max-time 300
 ```
 
@@ -103,10 +103,10 @@ output/
     ├── {num_poliza}_general.png
     ├── {num_poliza}_coberturas.png
     ├── ...
-    └── {num_poliza}.pdf
+    └── {num_poliza}_{telefono}.pdf
 ```
 
-Las imágenes se guardan en escala de grises. Se genera un PDF por póliza con todas las pestañas en orden.
+Las imágenes se guardan en escala de grises. Se genera un PDF por póliza con todas las pestañas capturadas en orden.
 
 ## Deploy en Azure VM
 

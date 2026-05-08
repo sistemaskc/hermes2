@@ -22,7 +22,6 @@ Ejecuta búsqueda en portal MetLife y devuelve rutas de screenshots capturados.
 ```json
 {
   "identificador": "XXXXXXXXXXXXX",
-  "tipo": "RFC",
   "pestanas": ["general", "coberturas"],
   "numero_telefono": "5512345678"
 }
@@ -30,10 +29,11 @@ Ejecuta búsqueda en portal MetLife y devuelve rutas de screenshots capturados.
 
 | Campo | Tipo | Requerido | Default | Descripción |
 |-------|------|-----------|---------|-------------|
-| `identificador` | `string` | Sí | — | RFC o número de póliza |
-| `tipo` | `"RFC"` \| `"POLIZA"` | No | `"POLIZA"` | Tipo de búsqueda |
+| `identificador` | `string` | Sí | — | RFC (≥10 chars) o número de póliza (exactamente 6 chars). El tipo se infiere automáticamente por longitud. |
 | `pestanas` | `array[string]` | No | `["todo"]` | Pestañas a capturar |
 | `numero_telefono` | `string` | Sí | — | Teléfono a 10 dígitos. Se eliminan espacios, `+` y otros no-dígitos automáticamente. |
+
+> **Inferencia de tipo:** longitud 6 → POLIZA; longitud ≥10 → RFC; cualquier otra longitud devuelve `422`.
 
 **Valores válidos de `pestanas`:**
 
@@ -110,16 +110,16 @@ La póliza o RFC no arrojó resultados.
 
 #### Response `422 Unprocessable Entity`
 
-Error de validación Pydantic en el body (formato estándar FastAPI).
+Error de validación Pydantic en el body (formato estándar FastAPI). Ocurre si `identificador` tiene longitud inválida (7-9 chars), `numero_telefono` no tiene 10 dígitos, o `pestanas` contiene un valor no reconocido.
 
 ```json
 {
   "detail": [
     {
-      "type": "enum",
-      "loc": ["body", "pestanas", 0],
-      "msg": "Input should be 'general', 'coberturas', 'beneficiarios', 'servicios', 'agentes' or 'todo'",
-      "input": "INVALIDA"
+      "type": "value_error",
+      "loc": ["body"],
+      "msg": "Value error, identificador con longitud 8 no es válido. Debe tener 6 caracteres (póliza) o 10+ caracteres (RFC).",
+      "input": { "identificador": "ABCD1234" }
     }
   ]
 }
@@ -169,7 +169,7 @@ Estado actual de la sesión.
 ```bash
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXXXXXXXXX", "tipo": "RFC", "pestanas": ["todo"], "numero_telefono": "5512345678"}' \
+  -d '{"identificador": "XXXXXXXXXXXXX", "pestanas": ["todo"], "numero_telefono": "5512345678"}' \
   --max-time 300
 ```
 
@@ -178,7 +178,7 @@ curl -X POST http://localhost:8000/consultar \
 ```bash
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXX", "tipo": "POLIZA", "pestanas": ["general", "beneficiarios"], "numero_telefono": "5512345678"}' \
+  -d '{"identificador": "XXXXXX", "pestanas": ["general", "beneficiarios"], "numero_telefono": "5512345678"}' \
   --max-time 300
 ```
 
