@@ -2,7 +2,7 @@ from src.application.session_manager import SessionManager
 from src.domain.entities import Captura, ConsultaRequest, Poliza
 from src.domain.exceptions import PortalNoDisponibleError
 from src.domain.ports import ConsultadorPort, StoragePort
-from src.domain.value_objects import expandir_pestanas
+from src.domain.value_objects import TipoIdentificador, expandir_pestanas
 from src.infrastructure.logger import logger
 
 
@@ -43,15 +43,15 @@ class ConsultarPolizaUseCase:
 
             polizas: list[Poliza] = []
 
-            for i, numero in enumerate(numeros):
+            for numero in numeros:
+                await self._consultador.volver_a_consultador()
+                await self._consultador.ir_a_busqueda()
+                await self._consultador.buscar(numero, TipoIdentificador.POLIZA)
+                await self._consultador.confirmar_dialogo()
                 poliza = await self._procesar_poliza(
                     numero, request.identificador, pestanas, request.numero_telefono
                 )
                 polizas.append(poliza)
-                if i < len(numeros) - 1:
-                    await self._consultador.ir_a_busqueda()
-                    await self._consultador.buscar(request.identificador, request.tipo)
-                    await self._consultador.confirmar_dialogo()
 
             return polizas
         finally:

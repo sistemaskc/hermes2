@@ -125,6 +125,9 @@ class LoginPage:
         except Exception as e:
             raise SesionExpiradaError(f"No se encontró botón 'ingresar': {e}") from e
 
+    async def ir_a_home(self) -> None:
+        await self._page.goto(self.URL_BASE, wait_until="networkidle")
+
     async def ir_a_busqueda(self) -> None:
         await self._page.goto(self.URL_BUSQUEDA, wait_until="networkidle")
 

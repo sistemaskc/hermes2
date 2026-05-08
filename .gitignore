@@ -8,3 +8,4 @@ output/
 logs/
 CLAUDE.md
 TAREAS.md
+*.csv
