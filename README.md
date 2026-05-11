@@ -94,8 +94,16 @@ curl -X POST http://localhost:8000/consultar \
 | `"todo"` | Expande a las 5 anteriores en orden |
 
 ```bash
-# Descargar archivo generado (PDF o PNG)
+# Preview PDF en iframe (default: inline)
 GET http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf
+
+# Forzar descarga
+GET http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf&disposition=attachment
+```
+
+```html
+<!-- Embeber PDF en frontend -->
+<iframe src="http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf" />
 ```
 
 El cliente HTTP debe configurar **timeout mínimo de 300s** para `/consultar`. Un RFC con múltiples pólizas puede tardar más.
