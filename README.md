@@ -93,7 +93,12 @@ curl -X POST http://localhost:8000/consultar \
 | `"agentes"` | Agentes |
 | `"todo"` | Expande a las 5 anteriores en orden |
 
-El cliente HTTP debe configurar **timeout mínimo de 300s**. Un RFC con múltiples pólizas puede tardar más.
+```bash
+# Descargar archivo generado (PDF o PNG)
+GET http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf
+```
+
+El cliente HTTP debe configurar **timeout mínimo de 300s** para `/consultar`. Un RFC con múltiples pólizas puede tardar más.
 
 ## Archivos generados
 

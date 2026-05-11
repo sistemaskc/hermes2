@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import FileResponse
 
 from src.adapters.inbound.schemas import (
     ConsultaRequestSchema,
@@ -7,6 +10,7 @@ from src.adapters.inbound.schemas import (
     PolizaSchema,
 )
 from src.application.use_cases import ConsultarPolizaUseCase
+from src.config import settings
 from src.domain.entities import ConsultaRequest
 from src.domain.exceptions import PolizaNoEncontradaError, PortalNoDisponibleError
 from src.infrastructure.logger import logger
@@ -22,6 +26,23 @@ def get_use_case(request: Request) -> ConsultarPolizaUseCase:
 async def health(request: Request):
     session = request.app.state.session_manager
     return {"estado": session.estado.value}
+
+
+@router.get("/archivo")
+async def descargar_archivo(path: str):
+    output_dir = settings.output_dir.resolve()
+    archivo = Path(path)
+    if not archivo.is_absolute():
+        archivo = Path.cwd() / archivo
+    archivo = archivo.resolve()
+
+    if not str(archivo).startswith(str(output_dir)):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ruta no permitida.")
+    if not archivo.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Archivo no encontrado.")
+
+    media_type = "application/pdf" if archivo.suffix == ".pdf" else "image/png"
+    return FileResponse(path=str(archivo), media_type=media_type, filename=archivo.name)
 
 
 @router.post("/consultar", response_model=ConsultaResponseSchema)

@@ -139,6 +139,36 @@ Error inesperado durante ejecución del RPA.
 
 ---
 
+### `GET /archivo`
+
+Descarga un archivo (PNG o PDF) generado por `/consultar`. Úsalo desde el frontend pasando la ruta devuelta en la respuesta de `/consultar`.
+
+#### Query Params
+
+| Parámetro | Tipo | Requerido | Descripción |
+|-----------|------|-----------|-------------|
+| `path` | `string` | Sí | Ruta relativa al archivo, tal como la devuelve `/consultar` |
+
+#### Ejemplo
+
+```bash
+GET /archivo?path=output\RLF150\RLF150_5512345678.pdf
+```
+
+#### Response `200 OK`
+
+Streaming del archivo con `Content-Type: application/pdf` o `image/png` según extensión.
+
+#### Response `403 Forbidden`
+
+La ruta apunta fuera del directorio `output/`.
+
+#### Response `404 Not Found`
+
+El archivo no existe en el filesystem.
+
+---
+
 ### `GET /health`
 
 Estado actual de la sesión.
