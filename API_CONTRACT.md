@@ -212,6 +212,16 @@ curl -X POST http://localhost:8000/consultar \
   --max-time 300
 ```
 
+### Descargar archivo generado
+
+```bash
+# PDF
+curl "http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf" --output RLF150.pdf
+
+# PNG de pestaña específica
+curl "http://localhost:8000/archivo?path=output\RLF150\RLF150_general.png" --output RLF150_general.png
+```
+
 ### Verificar estado del servicio
 
 ```bash
@@ -224,6 +234,6 @@ curl http://localhost:8000/health
 
 - **Timeout:** Configurar mínimo 300s en el cliente HTTP. RFC con múltiples pólizas puede tomar más tiempo.
 - **Reintentos en 409:** Esperar mínimo 5s antes de reintentar.
-- **Rutas devueltas:** Relativas al filesystem de la VM donde corre el servicio. Acceder vía red compartida o transferencia explícita.
+- **Rutas devueltas:** Relativas al filesystem del servicio. Usar `GET /archivo?path=<ruta>` para descargar desde el frontend.
 - **Imágenes:** PNGs en escala de grises (modo L).
 - **Orden de capturas:** Respeta el orden de `pestanas[]`. Con `"todo"`: general → coberturas → beneficiarios → servicios → agentes.
