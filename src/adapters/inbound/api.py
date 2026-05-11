@@ -41,8 +41,17 @@ async def descargar_archivo(path: str):
     if not archivo.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Archivo no encontrado.")
 
-    media_type = "application/pdf" if archivo.suffix == ".pdf" else "image/png"
-    return FileResponse(path=str(archivo), media_type=media_type, filename=archivo.name)
+    is_pdf = archivo.suffix == ".pdf"
+    media_type = "application/pdf" if is_pdf else "image/png"
+    disposition = f'inline; filename="{archivo.name}"' if is_pdf else f'attachment; filename="{archivo.name}"'
+    return FileResponse(
+        path=str(archivo),
+        media_type=media_type,
+        headers={
+            "Content-Disposition": disposition,
+            "X-Frame-Options": "ALLOWALL",
+        },
+    )
 
 
 @router.post("/consultar", response_model=ConsultaResponseSchema)
