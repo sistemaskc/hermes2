@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.adapters.inbound.api import router
 from src.adapters.outbound.local_storage import LocalStorageAdapter
@@ -41,6 +42,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="RPA Consultador MetLife", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+    expose_headers=["Content-Type"],
+    max_age=86400,
+)
+
 app.include_router(router)
 
 
