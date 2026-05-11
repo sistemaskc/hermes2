@@ -29,7 +29,7 @@ async def health(request: Request):
 
 
 @router.get("/archivo")
-async def descargar_archivo(path: str):
+async def descargar_archivo(path: str, disposition: str = "inline"):
     output_dir = settings.output_dir.resolve()
     archivo = Path(path)
     if not archivo.is_absolute():
@@ -40,15 +40,15 @@ async def descargar_archivo(path: str):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ruta no permitida.")
     if not archivo.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Archivo no encontrado.")
+    if disposition not in ("inline", "attachment"):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="disposition debe ser 'inline' o 'attachment'.")
 
-    is_pdf = archivo.suffix == ".pdf"
-    media_type = "application/pdf" if is_pdf else "image/png"
-    disposition = f'inline; filename="{archivo.name}"' if is_pdf else f'attachment; filename="{archivo.name}"'
+    media_type = "application/pdf" if archivo.suffix == ".pdf" else "image/png"
     return FileResponse(
         path=str(archivo),
         media_type=media_type,
         headers={
-            "Content-Disposition": disposition,
+            "Content-Disposition": f'{disposition}; filename="{archivo.name}"',
             "X-Frame-Options": "ALLOWALL",
         },
     )

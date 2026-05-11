@@ -145,26 +145,30 @@ Descarga un archivo (PNG o PDF) generado por `/consultar`. Úsalo desde el front
 
 #### Query Params
 
-| Parámetro | Tipo | Requerido | Descripción |
-|-----------|------|-----------|-------------|
-| `path` | `string` | Sí | Ruta relativa al archivo, tal como la devuelve `/consultar` |
+| Parámetro | Tipo | Requerido | Default | Descripción |
+|-----------|------|-----------|---------|-------------|
+| `path` | `string` | Sí | — | Ruta relativa al archivo, tal como la devuelve `/consultar` |
+| `disposition` | `"inline"` \| `"attachment"` | No | `"inline"` | `inline` = previsualización en iframe; `attachment` = forzar descarga |
 
-#### Ejemplo
+#### Ejemplos
 
 ```bash
+# Preview en iframe (default)
 GET /archivo?path=output\RLF150\RLF150_5512345678.pdf
+
+# Forzar descarga
+GET /archivo?path=output\RLF150\RLF150_5512345678.pdf&disposition=attachment
 ```
 
 #### Response `200 OK`
 
-Streaming del archivo. Headers de respuesta según tipo:
+Streaming del archivo con los siguientes headers:
 
-| Archivo | `Content-Type` | `Content-Disposition` | `X-Frame-Options` |
-|---------|---------------|----------------------|-------------------|
-| PDF | `application/pdf` | `inline; filename="..."` | `ALLOWALL` |
-| PNG | `image/png` | `attachment; filename="..."` | `ALLOWALL` |
-
-> PDFs se sirven con `inline` para permitir visualización en `<iframe>` desde cualquier origen. PNGs se descargan directamente.
+| Header | Valor |
+|--------|-------|
+| `Content-Type` | `application/pdf` (PDF) o `image/png` (PNG) |
+| `Content-Disposition` | `inline; filename="..."` o `attachment; filename="..."` según `disposition` |
+| `X-Frame-Options` | `ALLOWALL` — permite embeber en `<iframe>` desde cualquier origen |
 
 #### Response `403 Forbidden`
 
@@ -173,6 +177,10 @@ La ruta apunta fuera del directorio `output/`.
 #### Response `404 Not Found`
 
 El archivo no existe en el filesystem.
+
+#### Response `422 Unprocessable Entity`
+
+`disposition` tiene un valor distinto de `inline` o `attachment`.
 
 ---
 
@@ -219,13 +227,19 @@ curl -X POST http://localhost:8000/consultar \
   --max-time 300
 ```
 
+### Previsualizar PDF en iframe
+
+```html
+<iframe src="http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf" />
+```
+
 ### Descargar archivo generado
 
 ```bash
-# PDF
-curl "http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf" --output RLF150.pdf
+# PDF — forzar descarga
+curl "http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf&disposition=attachment" --output RLF150.pdf
 
-# PNG de pestaña específica
+# PNG
 curl "http://localhost:8000/archivo?path=output\RLF150\RLF150_general.png" --output RLF150_general.png
 ```
 
