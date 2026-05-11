@@ -157,7 +157,14 @@ GET /archivo?path=output\RLF150\RLF150_5512345678.pdf
 
 #### Response `200 OK`
 
-Streaming del archivo con `Content-Type: application/pdf` o `image/png` según extensión.
+Streaming del archivo. Headers de respuesta según tipo:
+
+| Archivo | `Content-Type` | `Content-Disposition` | `X-Frame-Options` |
+|---------|---------------|----------------------|-------------------|
+| PDF | `application/pdf` | `inline; filename="..."` | `ALLOWALL` |
+| PNG | `image/png` | `attachment; filename="..."` | `ALLOWALL` |
+
+> PDFs se sirven con `inline` para permitir visualización en `<iframe>` desde cualquier origen. PNGs se descargan directamente.
 
 #### Response `403 Forbidden`
 
