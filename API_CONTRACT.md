@@ -80,7 +80,11 @@ Ejecuta búsqueda en portal MetLife y devuelve rutas de screenshots capturados.
 | `polizas[].capturas[].ruta_archivo` | `string` | Ruta relativa al PNG (escala de grises) |
 | `polizas[].ruta_pdf` | `string` | Ruta relativa al PDF generado para esa póliza |
 
-> Las rutas son relativas al filesystem donde corre el servicio. Estructura: `output/{identificador}/{numero_poliza}_{pestana}.png`
+> Las rutas son relativas al filesystem donde corre el servicio:
+> - PNG: `output/{identificador}/{numero_poliza}_{pestana}.png`
+> - PDF: `output/{identificador}/{numero_poliza}_{telefono}.pdf`
+>
+> Usar `GET /archivo?path=<ruta>` para descargar o previsualizar desde el frontend.
 
 ---
 
@@ -251,10 +255,20 @@ curl http://localhost:8000/health
 
 ---
 
+## Flujo de integración típico
+
+```
+1. POST /consultar  →  { polizas: [{ ruta_pdf, capturas: [{ ruta_archivo }] }] }
+2. GET  /archivo?path={ruta_pdf}                     →  preview PDF en iframe
+3. GET  /archivo?path={ruta_archivo}                 →  preview/descarga PNG
+4. GET  /archivo?path={ruta_pdf}&disposition=attachment  →  forzar descarga PDF
+```
+
 ## Notas de integración
 
+- **CORS:** Habilitado con `allow_origins=["*"]` para desarrollo. En producción se restringirá a dominios específicos.
 - **Timeout:** Configurar mínimo 300s en el cliente HTTP. RFC con múltiples pólizas puede tomar más tiempo.
 - **Reintentos en 409:** Esperar mínimo 5s antes de reintentar.
-- **Rutas devueltas:** Relativas al filesystem del servicio. Usar `GET /archivo?path=<ruta>` para descargar desde el frontend.
+- **Rutas devueltas:** Relativas al filesystem del servicio. Pasar directamente a `GET /archivo?path=<ruta>` sin modificar.
 - **Imágenes:** PNGs en escala de grises (modo L).
 - **Orden de capturas:** Respeta el orden de `pestanas[]`. Con `"todo"`: general → coberturas → beneficiarios → servicios → agentes.
