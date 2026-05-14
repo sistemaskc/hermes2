@@ -82,7 +82,7 @@ Todos los errores de ejecución (no encontrado, portal caído, sesión expirada,
 | `successMessage` | `string` | Mensaje informativo en caso de éxito (normalmente vacío) |
 | `errorMessage` | `string` | Descripción del error cuando `success: false` |
 | `data` | `array` | Lista de PDFs generados |
-| `data[].file_name` | `string` | Nombre del archivo PDF: `{poliza}_{telefono}.pdf` |
+| `data[].file_name` | `string` | Nombre del archivo PDF: `{poliza}_{unix_timestamp}.pdf` |
 
 **Escenarios de error comunes:**
 
@@ -93,9 +93,9 @@ Todos los errores de ejecución (no encontrado, portal caído, sesión expirada,
 | Sesión expirada | `"Botón de ingreso no encontrado"` |
 | Error de captura en pestaña | `"Error capturando {pestana} en póliza {numero}. {detalle}"` |
 
-> **Archivos PDF:** guardados en `output/{identificador}/{poliza}_{telefono}.pdf` en el filesystem del servicio.  
+> **Archivos PDF:** guardados en `output/{poliza}_{unix_timestamp}.pdf` directamente en el directorio raíz de output (sin subcarpetas).  
 > Las imágenes PNG intermedias se eliminan automáticamente tras generar el PDF.  
-> Usar `GET /archivo?path=output/{identificador}/{file_name}` para descargar o previsualizar.
+> Usar `GET /archivo?path=output/{file_name}` para descargar o previsualizar.
 
 ---
 
@@ -126,17 +126,17 @@ Descarga un archivo PDF generado por `/consultar`.
 
 | Parámetro | Tipo | Requerido | Default | Descripción |
 |-----------|------|-----------|---------|-------------|
-| `path` | `string` | Sí | — | Ruta relativa al archivo, construida como `output/{identificador}/{file_name}` |
+| `path` | `string` | Sí | — | Ruta relativa al archivo, construida como `output/{file_name}` |
 | `disposition` | `"inline"` \| `"attachment"` | No | `"inline"` | `inline` = previsualización en iframe; `attachment` = forzar descarga |
 
 #### Ejemplos
 
 ```bash
 # Preview en iframe (default)
-GET /archivo?path=output\HMZ317\HMZ317_5512345678.pdf
+GET /archivo?path=output\HMZ317_1747123456.pdf
 
 # Forzar descarga
-GET /archivo?path=output\HMZ317\HMZ317_5512345678.pdf&disposition=attachment
+GET /archivo?path=output\HMZ317_1747123456.pdf&disposition=attachment
 ```
 
 #### Response `200 OK`
@@ -222,13 +222,13 @@ curl -X POST http://localhost:8000/consultar \
 ### Previsualizar PDF en iframe
 
 ```html
-<iframe src="http://localhost:8000/archivo?path=output\HMZ317\HMZ317_5512345678.pdf" />
+<iframe src="http://localhost:8000/archivo?path=output\HMZ317_1747123456.pdf" />
 ```
 
 ### Descargar PDF generado
 
 ```bash
-curl "http://localhost:8000/archivo?path=output\HMZ317\HMZ317_5512345678.pdf&disposition=attachment" --output HMZ317.pdf
+curl "http://localhost:8000/archivo?path=output\HMZ317_1747123456.pdf&disposition=attachment" --output HMZ317.pdf
 ```
 
 ### Verificar estado del servicio
@@ -243,7 +243,7 @@ curl http://localhost:8000/health
 
 ```
 1. POST /consultar  →  { success: true, data: [{ file_name }] }
-2. Construir path: output/{identificador}/{file_name}
+2. Construir path: output/{file_name}
 3. GET  /archivo?path={path}                        →  preview PDF en iframe
 4. GET  /archivo?path={path}&disposition=attachment →  forzar descarga PDF
 ```
@@ -255,4 +255,4 @@ curl http://localhost:8000/health
 - **Errores de negocio:** Siempre verificar `success` antes de usar `data`. Un `200` no garantiza éxito.
 - **Imágenes PNG:** Temporales — se eliminan automáticamente tras generar el PDF. Solo los PDFs persisten.
 - **Orden de capturas:** Con `"todo"`: general → coberturas → beneficiarios → servicios → agentes.
-- **Nombre de archivo PDF:** Formato `{numero_poliza}_{numero_telefono}.pdf`.
+- **Nombre de archivo PDF:** Formato `{numero_poliza}_{unix_timestamp}.pdf`. El timestamp es Unix epoch en segundos.
