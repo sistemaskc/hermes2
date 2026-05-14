@@ -70,3 +70,6 @@ class StoragePort(ABC):
 
     @abstractmethod
     def generar_pdf(self, identificador: str, numero_poliza: str, numero_telefono: str) -> Path: ...
+
+    @abstractmethod
+    def limpiar_capturas(self, identificador: str, numero_poliza: str) -> None: ...

@@ -6,13 +6,17 @@ from fastapi.responses import FileResponse
 from src.adapters.inbound.schemas import (
     ConsultaRequestSchema,
     ConsultaResponseSchema,
-    CapturaSchema,
-    PolizaSchema,
+    FileDataSchema,
 )
 from src.application.use_cases import ConsultarPolizaUseCase
 from src.config import settings
 from src.domain.entities import ConsultaRequest
-from src.domain.exceptions import PolizaNoEncontradaError, PortalNoDisponibleError
+from src.domain.exceptions import (
+    CapturaFallidaError,
+    PolizaNoEncontradaError,
+    PortalNoDisponibleError,
+    SesionExpiradaError,
+)
 from src.infrastructure.logger import logger
 
 router = APIRouter()
@@ -67,24 +71,15 @@ async def consultar(
             numero_telefono=body.numero_telefono,
         )
         polizas = await use_case.execute(dominio_request)
-    except PortalNoDisponibleError as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
     except PolizaNoEncontradaError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        return ConsultaResponseSchema(success=False, errorMessage=str(e))
+    except (PortalNoDisponibleError, SesionExpiradaError, CapturaFallidaError) as e:
+        return ConsultaResponseSchema(success=False, errorMessage=str(e))
     except Exception as e:
         logger.error("API", f"Error inesperado en consulta {body.identificador}: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        return ConsultaResponseSchema(success=False, errorMessage=str(e))
 
     return ConsultaResponseSchema(
-        polizas=[
-            PolizaSchema(
-                numero=p.numero,
-                capturas=[
-                    CapturaSchema(pestana=c.pestana, ruta_archivo=str(c.ruta_archivo))
-                    for c in p.capturas
-                ],
-                ruta_pdf=str(p.ruta_pdf),
-            )
-            for p in polizas
-        ]
+        success=True,
+        data=[FileDataSchema(file_name=Path(p.ruta_pdf).name) for p in polizas],
     )

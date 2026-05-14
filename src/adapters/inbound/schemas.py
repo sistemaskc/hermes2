@@ -2,7 +2,7 @@ import re
 
 from pydantic import BaseModel, field_validator, model_validator
 
-from src.domain.value_objects import Pestana, TipoIdentificador
+from src.domain.value_objects import TipoIdentificador, Pestana
 
 class ConsultaRequestSchema(BaseModel):
     identificador: str
@@ -33,20 +33,12 @@ class ConsultaRequestSchema(BaseModel):
         return self
 
 
-class CapturaSchema(BaseModel):
-    pestana: Pestana
-    ruta_archivo: str
-
-
-class PolizaSchema(BaseModel):
-    numero: str
-    capturas: list[CapturaSchema]
-    ruta_pdf: str
+class FileDataSchema(BaseModel):
+    file_name: str
 
 
 class ConsultaResponseSchema(BaseModel):
-    polizas: list[PolizaSchema]
-
-
-class ErrorSchema(BaseModel):
-    detalle: str
+    success: bool
+    successMessage: str = ""
+    errorMessage: str = ""
+    data: list[FileDataSchema] = []

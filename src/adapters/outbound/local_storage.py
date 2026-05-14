@@ -51,4 +51,10 @@ class LocalStorageAdapter(StoragePort):
         with open(ruta_pdf, "wb") as f:
             f.write(img2pdf.convert([str(p) for p in capturas]))
 
+        self.limpiar_capturas(identificador, numero_poliza)
         return ruta_pdf
+
+    def limpiar_capturas(self, identificador: str, numero_poliza: str) -> None:
+        directorio = self._base / identificador
+        for png in directorio.glob(f"{numero_poliza}_*.png"):
+            png.unlink(missing_ok=True)

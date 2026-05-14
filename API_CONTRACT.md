@@ -10,12 +10,13 @@ Content-Type: `application/json`
 
 ### `POST /consultar`
 
-Ejecuta búsqueda en portal MetLife y devuelve rutas de screenshots capturados.
+Ejecuta búsqueda en portal MetLife y devuelve nombres de los PDFs generados.
 
 **Notas:**
 - Respuesta síncrona — cliente debe configurar timeout mínimo **300s**
 - Un solo request activo a la vez (lock interno)
-- RFC puede devolver múltiples pólizas — se procesan todas
+- RFC puede devolver múltiples pólizas — se procesan todas, un PDF por póliza
+- Errores de negocio (no encontrado, portal caído, etc.) devuelven `200` con `success: false`
 
 #### Request Body
 
@@ -48,73 +49,59 @@ Ejecuta búsqueda en portal MetLife y devuelve rutas de screenshots capturados.
 
 ---
 
-#### Response `200 OK`
+#### Response `200 OK` — Éxito
 
 ```json
 {
-  "polizas": [
-    {
-      "numero": "<poliza>",
-      "capturas": [
-        {
-          "pestana": "general",
-          "ruta_archivo": "output\\<RFC>\\<poliza>_general.png"
-        },
-        {
-          "pestana": "coberturas",
-          "ruta_archivo": "output\\<RFC>\\<poliza>_coberturas.png"
-        }
-      ],
-      "ruta_pdf": "output\\<RFC>\\<poliza>_<telefono>.pdf"
-    }
+  "success": true,
+  "successMessage": "",
+  "errorMessage": "",
+  "data": [
+    { "file_name": "HMZ317_5512345678.pdf" },
+    { "file_name": "MTP455_5512345678.pdf" }
   ]
+}
+```
+
+#### Response `200 OK` — Error de negocio
+
+Todos los errores de ejecución (no encontrado, portal caído, sesión expirada, etc.) devuelven HTTP 200 con `success: false`.
+
+```json
+{
+  "success": false,
+  "successMessage": "",
+  "errorMessage": "No se encontraron pólizas para: XXXXXXXXXXXXXXX",
+  "data": []
 }
 ```
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `polizas` | `array` | Lista de pólizas encontradas |
-| `polizas[].numero` | `string` | Número de póliza |
-| `polizas[].capturas` | `array` | Screenshots por pestaña |
-| `polizas[].capturas[].pestana` | `string` | Nombre de la pestaña capturada |
-| `polizas[].capturas[].ruta_archivo` | `string` | Ruta relativa al PNG (escala de grises) |
-| `polizas[].ruta_pdf` | `string` | Ruta relativa al PDF generado para esa póliza |
+| `success` | `boolean` | `true` si la consulta fue exitosa |
+| `successMessage` | `string` | Mensaje informativo en caso de éxito (normalmente vacío) |
+| `errorMessage` | `string` | Descripción del error cuando `success: false` |
+| `data` | `array` | Lista de PDFs generados |
+| `data[].file_name` | `string` | Nombre del archivo PDF: `{poliza}_{telefono}.pdf` |
 
-> Las rutas son relativas al filesystem donde corre el servicio:
-> - PNG: `output/{identificador}/{numero_poliza}_{pestana}.png`
-> - PDF: `output/{identificador}/{numero_poliza}_{telefono}.pdf`
->
-> Usar `GET /archivo?path=<ruta>` para descargar o previsualizar desde el frontend.
+**Escenarios de error comunes:**
 
----
+| Escenario | `errorMessage` típico |
+|-----------|----------------------|
+| RFC/póliza sin resultados | `"No se encontraron pólizas para: {identificador}"` |
+| Portal no disponible | `"No se encontró campo de búsqueda"` |
+| Sesión expirada | `"Botón de ingreso no encontrado"` |
+| Error de captura en pestaña | `"Error capturando {pestana} en póliza {numero}. {detalle}"` |
 
-#### Response `409 Conflict`
-
-Otro request en proceso. Reintentar en unos segundos.
-
-```json
-{
-  "detail": "Consulta en proceso. Reintentar en unos segundos."
-}
-```
-
----
-
-#### Response `404 Not Found`
-
-La póliza o RFC no arrojó resultados.
-
-```json
-{
-  "detail": "No se encontraron pólizas para el identificador proporcionado."
-}
-```
+> **Archivos PDF:** guardados en `output/{identificador}/{poliza}_{telefono}.pdf` en el filesystem del servicio.  
+> Las imágenes PNG intermedias se eliminan automáticamente tras generar el PDF.  
+> Usar `GET /archivo?path=output/{identificador}/{file_name}` para descargar o previsualizar.
 
 ---
 
 #### Response `422 Unprocessable Entity`
 
-Error de validación Pydantic en el body (formato estándar FastAPI). Ocurre si `identificador` tiene longitud inválida (7-9 chars), `numero_telefono` no tiene 10 dígitos, o `pestanas` contiene un valor no reconocido.
+Error de validación Pydantic en el body. Ocurre si `identificador` tiene longitud inválida (7-9 chars), `numero_telefono` no tiene 10 dígitos, o `pestanas` contiene un valor no reconocido.
 
 ```json
 {
@@ -131,37 +118,25 @@ Error de validación Pydantic en el body (formato estándar FastAPI). Ocurre si 
 
 ---
 
-#### Response `500 Internal Server Error`
-
-Error inesperado durante ejecución del RPA.
-
-```json
-{
-  "detail": "mensaje de error interno"
-}
-```
-
----
-
 ### `GET /archivo`
 
-Descarga un archivo (PNG o PDF) generado por `/consultar`. Úsalo desde el frontend pasando la ruta devuelta en la respuesta de `/consultar`.
+Descarga un archivo PDF generado por `/consultar`.
 
 #### Query Params
 
 | Parámetro | Tipo | Requerido | Default | Descripción |
 |-----------|------|-----------|---------|-------------|
-| `path` | `string` | Sí | — | Ruta relativa al archivo, tal como la devuelve `/consultar` |
+| `path` | `string` | Sí | — | Ruta relativa al archivo, construida como `output/{identificador}/{file_name}` |
 | `disposition` | `"inline"` \| `"attachment"` | No | `"inline"` | `inline` = previsualización en iframe; `attachment` = forzar descarga |
 
 #### Ejemplos
 
 ```bash
 # Preview en iframe (default)
-GET /archivo?path=output\RLF150\RLF150_5512345678.pdf
+GET /archivo?path=output\HMZ317\HMZ317_5512345678.pdf
 
 # Forzar descarga
-GET /archivo?path=output\RLF150\RLF150_5512345678.pdf&disposition=attachment
+GET /archivo?path=output\HMZ317\HMZ317_5512345678.pdf&disposition=attachment
 ```
 
 #### Response `200 OK`
@@ -170,7 +145,7 @@ Streaming del archivo con los siguientes headers:
 
 | Header | Valor |
 |--------|-------|
-| `Content-Type` | `application/pdf` (PDF) o `image/png` (PNG) |
+| `Content-Type` | `application/pdf` |
 | `Content-Disposition` | `inline; filename="..."` o `attachment; filename="..."` según `disposition` |
 | `X-Frame-Options` | `ALLOWALL` — permite embeber en `<iframe>` desde cualquier origen |
 
@@ -218,8 +193,21 @@ Estado actual de la sesión.
 ```bash
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXXXXXXXXX", "pestanas": ["todo"], "numero_telefono": "5512345678"}' \
+  -d '{"identificador": "FOPS840824XXX", "pestanas": ["todo"], "numero_telefono": "5512345678"}' \
   --max-time 300
+```
+
+Respuesta (RFC con 2 pólizas):
+```json
+{
+  "success": true,
+  "successMessage": "",
+  "errorMessage": "",
+  "data": [
+    { "file_name": "MTP455_5512345678.pdf" },
+    { "file_name": "ELW404_5512345678.pdf" }
+  ]
+}
 ```
 
 ### Buscar por número de póliza, pestañas específicas
@@ -227,24 +215,20 @@ curl -X POST http://localhost:8000/consultar \
 ```bash
 curl -X POST http://localhost:8000/consultar \
   -H "Content-Type: application/json" \
-  -d '{"identificador": "XXXXXX", "pestanas": ["general", "beneficiarios"], "numero_telefono": "5512345678"}' \
+  -d '{"identificador": "HMZ317", "pestanas": ["general", "beneficiarios"], "numero_telefono": "5512345678"}' \
   --max-time 300
 ```
 
 ### Previsualizar PDF en iframe
 
 ```html
-<iframe src="http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf" />
+<iframe src="http://localhost:8000/archivo?path=output\HMZ317\HMZ317_5512345678.pdf" />
 ```
 
-### Descargar archivo generado
+### Descargar PDF generado
 
 ```bash
-# PDF — forzar descarga
-curl "http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf&disposition=attachment" --output RLF150.pdf
-
-# PNG
-curl "http://localhost:8000/archivo?path=output\RLF150\RLF150_general.png" --output RLF150_general.png
+curl "http://localhost:8000/archivo?path=output\HMZ317\HMZ317_5512345678.pdf&disposition=attachment" --output HMZ317.pdf
 ```
 
 ### Verificar estado del servicio
@@ -258,17 +242,17 @@ curl http://localhost:8000/health
 ## Flujo de integración típico
 
 ```
-1. POST /consultar  →  { polizas: [{ ruta_pdf, capturas: [{ ruta_archivo }] }] }
-2. GET  /archivo?path={ruta_pdf}                     →  preview PDF en iframe
-3. GET  /archivo?path={ruta_archivo}                 →  preview/descarga PNG
-4. GET  /archivo?path={ruta_pdf}&disposition=attachment  →  forzar descarga PDF
+1. POST /consultar  →  { success: true, data: [{ file_name }] }
+2. Construir path: output/{identificador}/{file_name}
+3. GET  /archivo?path={path}                        →  preview PDF en iframe
+4. GET  /archivo?path={path}&disposition=attachment →  forzar descarga PDF
 ```
 
 ## Notas de integración
 
 - **CORS:** Habilitado con `allow_origins=["*"]` para desarrollo. En producción se restringirá a dominios específicos.
 - **Timeout:** Configurar mínimo 300s en el cliente HTTP. RFC con múltiples pólizas puede tomar más tiempo.
-- **Reintentos en 409:** Esperar mínimo 5s antes de reintentar.
-- **Rutas devueltas:** Relativas al filesystem del servicio. Pasar directamente a `GET /archivo?path=<ruta>` sin modificar.
-- **Imágenes:** PNGs en escala de grises (modo L).
-- **Orden de capturas:** Respeta el orden de `pestanas[]`. Con `"todo"`: general → coberturas → beneficiarios → servicios → agentes.
+- **Errores de negocio:** Siempre verificar `success` antes de usar `data`. Un `200` no garantiza éxito.
+- **Imágenes PNG:** Temporales — se eliminan automáticamente tras generar el PDF. Solo los PDFs persisten.
+- **Orden de capturas:** Con `"todo"`: general → coberturas → beneficiarios → servicios → agentes.
+- **Nombre de archivo PDF:** Formato `{numero_poliza}_{numero_telefono}.pdf`.
