@@ -48,16 +48,14 @@ class ConsultarPolizaUseCase:
                 await self._consultador.ir_a_busqueda()
                 await self._consultador.buscar(numero, TipoIdentificador.POLIZA)
                 await self._consultador.confirmar_dialogo()
-                poliza = await self._procesar_poliza(
-                    numero, request.identificador, pestanas, request.numero_telefono
-                )
+                poliza = await self._procesar_poliza(numero, pestanas)
                 polizas.append(poliza)
 
             return polizas
         finally:
             await self._consultador.volver_a_consultador()
 
-    async def _procesar_poliza(self, numero, identificador, pestanas, numero_telefono) -> Poliza:
+    async def _procesar_poliza(self, numero, pestanas) -> Poliza:
         logger.info("ConsultarPolizaUseCase", f"Abriendo póliza {numero}")
         await self._consultador.abrir_poliza(numero)
 
@@ -68,14 +66,12 @@ class ConsultarPolizaUseCase:
             try:
                 await self._consultador.navegar_pestana(pestana)
                 datos = await self._consultador.capturar_screenshot()
-                ruta = self._storage.guardar_captura(
-                    identificador, numero, pestana, datos
-                )
+                ruta = self._storage.guardar_captura(numero, pestana, datos)
                 capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
             except Exception as e:
                 logger.error("ConsultarPolizaUseCase", f"Error capturando {pestana.value} en póliza {numero}: {e}")
 
-        ruta_pdf = self._storage.generar_pdf(identificador, numero, numero_telefono)
+        ruta_pdf = self._storage.generar_pdf(numero)
         logger.info("ConsultarPolizaUseCase", f"PDF generado: {ruta_pdf}")
 
         return Poliza(numero=numero, capturas=capturas, ruta_pdf=ruta_pdf)

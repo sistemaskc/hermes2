@@ -1,3 +1,4 @@
+import re
 import pytest
 from pathlib import Path
 from PIL import Image
@@ -20,48 +21,49 @@ def storage(tmp_path: Path) -> LocalStorageAdapter:
 
 
 def test_guardar_captura_crea_archivo(storage: LocalStorageAdapter, tmp_path: Path):
-    ruta = storage.guardar_captura("RFC123", "POL001", Pestana.GENERAL, png_bytes())
+    ruta = storage.guardar_captura("POL001", Pestana.GENERAL, png_bytes())
     assert ruta.exists()
     assert ruta.name == "POL001_general.png"
-    assert ruta.parent == tmp_path / "RFC123"
-
-
-def test_guardar_captura_crea_directorio_si_no_existe(storage: LocalStorageAdapter, tmp_path: Path):
-    ruta = storage.guardar_captura("NUEVO_RFC", "POL002", Pestana.COBERTURAS, png_bytes("blue"))
-    assert (tmp_path / "NUEVO_RFC").is_dir()
-    assert ruta.exists()
+    assert ruta.parent == tmp_path
 
 
 def test_listar_capturas_respeta_orden(storage: LocalStorageAdapter):
-    storage.guardar_captura("RFC123", "POL001", Pestana.AGENTES, png_bytes())
-    storage.guardar_captura("RFC123", "POL001", Pestana.GENERAL, png_bytes())
-    storage.guardar_captura("RFC123", "POL001", Pestana.COBERTURAS, png_bytes())
+    storage.guardar_captura("POL001", Pestana.AGENTES, png_bytes())
+    storage.guardar_captura("POL001", Pestana.GENERAL, png_bytes())
+    storage.guardar_captura("POL001", Pestana.COBERTURAS, png_bytes())
 
-    rutas = storage.listar_capturas("RFC123", "POL001")
+    rutas = storage.listar_capturas("POL001")
     nombres = [r.stem.split("_", 1)[1] for r in rutas]
 
     assert nombres == ["general", "coberturas", "agentes"]
 
 
 def test_listar_capturas_omite_pestanas_no_guardadas(storage: LocalStorageAdapter):
-    storage.guardar_captura("RFC123", "POL001", Pestana.GENERAL, png_bytes())
+    storage.guardar_captura("POL001", Pestana.GENERAL, png_bytes())
 
-    rutas = storage.listar_capturas("RFC123", "POL001")
+    rutas = storage.listar_capturas("POL001")
     assert len(rutas) == 1
     assert rutas[0].name == "POL001_general.png"
 
 
 def test_generar_pdf_crea_archivo(storage: LocalStorageAdapter, tmp_path: Path):
-    storage.guardar_captura("RFC123", "POL001", Pestana.GENERAL, png_bytes("red"))
-    storage.guardar_captura("RFC123", "POL001", Pestana.COBERTURAS, png_bytes("blue"))
+    storage.guardar_captura("POL001", Pestana.GENERAL, png_bytes("red"))
+    storage.guardar_captura("POL001", Pestana.COBERTURAS, png_bytes("blue"))
 
-    ruta_pdf = storage.generar_pdf("RFC123", "POL001", "5512345678")
+    ruta_pdf = storage.generar_pdf("POL001")
 
     assert ruta_pdf.exists()
-    assert ruta_pdf.name == "POL001_5512345678.pdf"
+    assert re.match(r"POL001_\d+\.pdf", ruta_pdf.name)
     assert ruta_pdf.stat().st_size > 0
+
+
+def test_generar_pdf_elimina_pngs(storage: LocalStorageAdapter, tmp_path: Path):
+    storage.guardar_captura("POL001", Pestana.GENERAL, png_bytes())
+    storage.generar_pdf("POL001")
+
+    assert list(tmp_path.glob("POL001_*.png")) == []
 
 
 def test_generar_pdf_sin_capturas_lanza_error(storage: LocalStorageAdapter):
     with pytest.raises(FileNotFoundError):
-        storage.generar_pdf("RFC_VACIO", "POL_INEXISTENTE", "5512345678")
+        storage.generar_pdf("POL_INEXISTENTE")
