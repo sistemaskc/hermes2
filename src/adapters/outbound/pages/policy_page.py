@@ -18,8 +18,35 @@ class PolicyPage:
 
     SELECTOR_CONTENIDO = "#root > div.container"
     SELECTOR_TABS_FIJAS = ".fixed-bottom"
-    # Selector del botón "siguiente página" — verificar en portal con DevTools
-    SELECTOR_PAGINACION_SIGUIENTE = ".pagination .page-item:last-child:not(.disabled) .page-link"
+
+    # JS: encuentra el primer <a.page-link> en el li inmediatamente después del li.active
+    # Funciona con paginación simple (solo números) y completa (First/Prev/Next/Last)
+    _JS_TIENE_SIGUIENTE = """() => {
+        const active = document.querySelector('.pagination .page-item.active');
+        if (!active) return false;
+        let next = active.nextElementSibling;
+        while (next) {
+            if (next.tagName === 'LI' && !next.classList.contains('disabled')) {
+                if (next.querySelector('a.page-link')) return true;
+            }
+            next = next.nextElementSibling;
+        }
+        return false;
+    }"""
+
+    _JS_CLICK_SIGUIENTE = """() => {
+        const active = document.querySelector('.pagination .page-item.active');
+        if (!active) return false;
+        let next = active.nextElementSibling;
+        while (next) {
+            if (next.tagName === 'LI' && !next.classList.contains('disabled')) {
+                const link = next.querySelector('a.page-link');
+                if (link) { link.click(); return true; }
+            }
+            next = next.nextElementSibling;
+        }
+        return false;
+    }"""
 
     async def navegar_pestana(self, pestana: Pestana) -> None:
         xpath = self.XPATHS_PESTANAS.get(pestana)
@@ -68,11 +95,10 @@ class PolicyPage:
 
     async def tiene_siguiente_pagina(self) -> bool:
         try:
-            el = await self._page.query_selector(self.SELECTOR_PAGINACION_SIGUIENTE)
-            return el is not None
+            return await self._page.evaluate(self._JS_TIENE_SIGUIENTE)
         except Exception:
             return False
 
     async def navegar_siguiente_pagina(self) -> None:
-        await self._page.click(self.SELECTOR_PAGINACION_SIGUIENTE)
+        await self._page.evaluate(self._JS_CLICK_SIGUIENTE)
         await self._esperar_contenido_estable()
