@@ -9,3 +9,4 @@ logs/
 CLAUDE.md
 TAREAS.md
 *.csv
+tmp/
