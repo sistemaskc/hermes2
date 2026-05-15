@@ -62,14 +62,21 @@ class ConsultarPolizaUseCase:
         capturas: list[Captura] = []
 
         for pestana in pestanas:
-            logger.info("ConsultarPolizaUseCase", f"Capturando pestaña {pestana.value} de póliza {numero}")
+            logger.info("ConsultarPolizaUseCase", f"Capturando pestana {pestana.value} de poliza {numero}")
             try:
                 await self._consultador.navegar_pestana(pestana)
-                datos = await self._consultador.capturar_screenshot()
-                ruta = self._storage.guardar_captura(numero, pestana, datos)
-                capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
+                pagina = 1
+                while True:
+                    datos = await self._consultador.capturar_screenshot()
+                    ruta = self._storage.guardar_captura(numero, pestana, pagina, datos)
+                    capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
+                    if not await self._consultador.tiene_siguiente_pagina():
+                        break
+                    await self._consultador.navegar_siguiente_pagina()
+                    pagina += 1
+                    logger.info("ConsultarPolizaUseCase", f"Pagina {pagina} de {pestana.value} en poliza {numero}")
             except Exception as e:
-                logger.error("ConsultarPolizaUseCase", f"Error capturando {pestana.value} en póliza {numero}: {e}")
+                logger.error("ConsultarPolizaUseCase", f"Error capturando {pestana.value} en poliza {numero}: {e}")
 
         ruta_pdf = self._storage.generar_pdf(numero)
         logger.info("ConsultarPolizaUseCase", f"PDF generado: {ruta_pdf}")

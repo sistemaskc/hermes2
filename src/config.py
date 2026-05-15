@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     metlife_password: str
     headless: bool = True
     output_dir: Path = Path("output")
+    tmp_dir: Path = Path("tmp")
     heartbeat_interval: int = 240
     max_reintentos: int = 3
     host: str = "0.0.0.0"

@@ -18,6 +18,8 @@ class PolicyPage:
 
     SELECTOR_CONTENIDO = "#root > div.container"
     SELECTOR_TABS_FIJAS = ".fixed-bottom"
+    # Selector del botón "siguiente página" — verificar en portal con DevTools
+    SELECTOR_PAGINACION_SIGUIENTE = ".pagination .page-item:last-child:not(.disabled) .page-link"
 
     async def navegar_pestana(self, pestana: Pestana) -> None:
         xpath = self.XPATHS_PESTANAS.get(pestana)
@@ -63,3 +65,14 @@ class PolicyPage:
                 )
         except Exception as e:
             raise CapturaFallidaError("?", "screenshot", str(e)) from e
+
+    async def tiene_siguiente_pagina(self) -> bool:
+        try:
+            el = await self._page.query_selector(self.SELECTOR_PAGINACION_SIGUIENTE)
+            return el is not None
+        except Exception:
+            return False
+
+    async def navegar_siguiente_pagina(self) -> None:
+        await self._page.click(self.SELECTOR_PAGINACION_SIGUIENTE)
+        await self._esperar_contenido_estable()

@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
         password=settings.metlife_password,
         headless=settings.headless,
     )
-    storage = LocalStorageAdapter(output_dir=settings.output_dir)
+    storage = LocalStorageAdapter(output_dir=settings.output_dir, tmp_dir=settings.tmp_dir)
     manager = SessionManager(
         consultador=adapter,
         heartbeat_interval=settings.heartbeat_interval,

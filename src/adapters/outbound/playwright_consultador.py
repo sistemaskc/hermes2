@@ -66,6 +66,14 @@ class PlaywrightConsultadorAdapter(ConsultadorPort):
         page = PolicyPage(self._page)
         return await page.capturar_screenshot()
 
+    async def tiene_siguiente_pagina(self) -> bool:
+        page = PolicyPage(self._page)
+        return await page.tiene_siguiente_pagina()
+
+    async def navegar_siguiente_pagina(self) -> None:
+        page = PolicyPage(self._page)
+        await page.navegar_siguiente_pagina()
+
     async def volver_a_consultador(self) -> None:
         page = LoginPage(self._page, self._usuario, self._password)
         await page.volver_a_consultador()
