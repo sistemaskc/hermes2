@@ -19,7 +19,7 @@ class LocalStorageAdapter(StoragePort):
         self._tmp.mkdir(parents=True, exist_ok=True)
 
     def guardar_captura(self, numero_poliza: str, pestana: Pestana, pagina: int, datos: bytes) -> Path:
-        ruta = self._base / f"{numero_poliza}_{pestana.value}_p{pagina}.png"
+        ruta = self._tmp / f"{numero_poliza}_{pestana.value}_p{pagina}.png"
 
         img = Image.open(io.BytesIO(datos))
         if img.height > 150:
@@ -32,7 +32,7 @@ class LocalStorageAdapter(StoragePort):
     def listar_capturas(self, numero_poliza: str) -> list[Path]:
         rutas = []
         for pestana in PESTANAS_ORDENADAS:
-            paginas = list(self._base.glob(f"{numero_poliza}_{pestana.value}_p*.png"))
+            paginas = list(self._tmp.glob(f"{numero_poliza}_{pestana.value}_p*.png"))
             paginas.sort(key=lambda p: self._numero_pagina(p))
             rutas.extend(paginas)
         return rutas
@@ -56,7 +56,7 @@ class LocalStorageAdapter(StoragePort):
         return ruta_final
 
     def limpiar_capturas(self, numero_poliza: str) -> None:
-        for png in self._base.glob(f"{numero_poliza}_*.png"):
+        for png in self._tmp.glob(f"{numero_poliza}_*.png"):
             png.unlink(missing_ok=True)
 
     @staticmethod
