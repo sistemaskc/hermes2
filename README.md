@@ -55,6 +55,15 @@ iniciar.bat
 
 Al arrancar, el servicio ejecuta login en el portal MetLife. Si el portal requiere OTP, completarlo manualmente en el browser abierto. El servidor queda listo cuando el log muestra `SessionManager arrancado`.
 
+### Recuperación automática de sesión
+
+El servicio se recupera solo ante sesiones expiradas en dos escenarios:
+
+- **En idle:** El heartbeat (cada 240s) detecta el form de login SSO en el DOM y ejecuta re-login automático antes del siguiente request.
+- **Mid-request:** Si la sesión expira durante una consulta, el servicio hace re-login y reintenta la operación. El cliente recibe `success: true` sin saber que hubo re-login.
+
+No es necesario reiniciar el servicio si la sesión expira.
+
 ## Uso
 
 Ver [API_CONTRACT.md](API_CONTRACT.md) para el contrato completo.
