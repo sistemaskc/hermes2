@@ -1,6 +1,6 @@
 from src.application.session_manager import SessionManager
 from src.domain.entities import Captura, ConsultaRequest, Poliza
-from src.domain.exceptions import PortalNoDisponibleError
+from src.domain.exceptions import PortalNoDisponibleError, SesionExpiradaError
 from src.domain.ports import ConsultadorPort, StoragePort
 from src.domain.value_objects import TipoIdentificador, expandir_pestanas
 from src.infrastructure.logger import logger
@@ -23,8 +23,14 @@ class ConsultarPolizaUseCase:
                 "Consulta en proceso. Reintentar en unos segundos."
             )
 
-        async with self._session.sesion_activa():
-            return await self._procesar(request)
+        try:
+            async with self._session.sesion_activa():
+                return await self._procesar(request)
+        except SesionExpiradaError:
+            # Re-login ya completado por SessionManager. Reintentar una vez.
+            logger.info("ConsultarPolizaUseCase", "Reintentando request tras re-login por sesión expirada...")
+            async with self._session.sesion_activa():
+                return await self._procesar(request)
 
     async def _procesar(self, request: ConsultaRequest) -> list[Poliza]:
         pestanas = expandir_pestanas(request.pestanas)
