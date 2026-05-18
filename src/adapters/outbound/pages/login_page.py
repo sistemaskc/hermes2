@@ -137,6 +137,33 @@ class LoginPage:
     async def sesion_activa(self) -> bool:
         try:
             await self._page.goto(self.URL_BUSQUEDA, wait_until="networkidle", timeout=10000)
-            return DOMINIO_PORTAL in self._page.url
-        except Exception:
+        except Exception as e:
+            logger.warning("LoginPage.sesion_activa", f"Navegación falló: {e}")
             return False
+
+        url_actual = self._page.url
+        logger.debug("LoginPage.sesion_activa", f"URL tras navegación: {url_actual}")
+
+        # Presencia del form SSO en DOM = sesión expirada.
+        # El portal no redirige al expirar: la URL puede seguir siendo consultadorBusqueda
+        # mientras el SSO renderiza el formulario de credenciales sobre la misma ruta.
+        try:
+            input_usuario = await self._page.query_selector("#username")
+            if input_usuario:
+                logger.warning(
+                    "LoginPage.sesion_activa",
+                    "Form SSO detectado en DOM (#username presente) — sesión expirada.",
+                )
+                return False
+        except Exception as e:
+            logger.warning("LoginPage.sesion_activa", f"Error al inspeccionar DOM: {e}")
+
+        if DOMINIO_PORTAL not in url_actual:
+            logger.warning(
+                "LoginPage.sesion_activa",
+                f"URL inesperada tras navegación: {url_actual}",
+            )
+            return False
+
+        logger.debug("LoginPage.sesion_activa", "Sesión confirmada activa (DOM limpio + URL correcta).")
+        return True
