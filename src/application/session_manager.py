@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from src.domain.exceptions import PortalNoDisponibleError
+from src.domain.exceptions import PortalNoDisponibleError, SesionExpiradaError
 from src.domain.ports import ConsultadorPort, EstadoSesion
 from src.infrastructure.logger import logger
 
@@ -53,12 +53,15 @@ class SessionManager:
                 "Sesión en estado ERROR. El servicio no puede procesar requests."
             )
         async with self._lock:
-            estado_previo = self._estado
             self._estado = EstadoSesion.PROCESSING
             try:
                 yield
+            except SesionExpiradaError:
+                logger.warning("SessionManager", "SesionExpiradaError durante procesamiento. Re-login inmediato...")
+                await self._re_login()
+                raise
             finally:
-                self._estado = estado_previo if estado_previo != EstadoSesion.PROCESSING else EstadoSesion.ACTIVE
+                self._estado = self._estado if self._estado not in (EstadoSesion.PROCESSING,) else EstadoSesion.ACTIVE
 
     @property
     def estado(self) -> EstadoSesion:
