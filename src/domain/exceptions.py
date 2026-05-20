@@ -14,3 +14,8 @@ class PolizaNoEncontradaError(Exception):
 class CapturaFallidaError(Exception):
     def __init__(self, numero: str, pestana: str, detalle: str = ""):
         super().__init__(f"Error capturando {pestana} en póliza {numero}. {detalle}")
+
+
+class ColaSaturadaError(Exception):
+    def __init__(self, max_size: int):
+        super().__init__(f"Cola de solicitudes llena ({max_size} pendientes). Reintentar más tarde.")

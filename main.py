@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
         consultador=adapter,
         heartbeat_interval=settings.heartbeat_interval,
         max_reintentos=settings.max_reintentos,
+        max_queue_size=settings.max_queue_size,
     )
     use_case = ConsultarPolizaUseCase(
         session_manager=manager,

@@ -13,6 +13,7 @@ from src.config import settings
 from src.domain.entities import ConsultaRequest
 from src.domain.exceptions import (
     CapturaFallidaError,
+    ColaSaturadaError,
     PolizaNoEncontradaError,
     PortalNoDisponibleError,
     SesionExpiradaError,
@@ -29,7 +30,7 @@ def get_use_case(request: Request) -> ConsultarPolizaUseCase:
 @router.get("/health")
 async def health(request: Request):
     session = request.app.state.session_manager
-    return {"estado": session.estado.value}
+    return {"estado": session.estado.value, "pending": session.pending}
 
 
 @router.get("/archivo")
@@ -71,6 +72,8 @@ async def consultar(
             numero_telefono=body.numero_telefono,
         )
         polizas = await use_case.execute(dominio_request)
+    except ColaSaturadaError as e:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(e))
     except PolizaNoEncontradaError as e:
         return ConsultaResponseSchema(success=False, errorMessage=str(e))
     except (PortalNoDisponibleError, SesionExpiradaError, CapturaFallidaError) as e:

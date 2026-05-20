@@ -1,7 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from src.domain.exceptions import PortalNoDisponibleError, SesionExpiradaError
+from src.domain.exceptions import ColaSaturadaError, PortalNoDisponibleError, SesionExpiradaError
 from src.domain.ports import ConsultadorPort, EstadoSesion
 from src.infrastructure.logger import logger
 
@@ -12,11 +12,14 @@ class SessionManager:
         consultador: ConsultadorPort,
         heartbeat_interval: int = 240,
         max_reintentos: int = 3,
+        max_queue_size: int = 10,
     ):
         self._consultador = consultador
         self._heartbeat_interval = heartbeat_interval
         self._max_reintentos = max_reintentos
+        self._max_queue_size = max_queue_size
         self._lock = asyncio.Lock()
+        self._pending = 0
         self._heartbeat_task: asyncio.Task | None = None
         self._estado = EstadoSesion.INITIALIZING
 
@@ -47,28 +50,35 @@ class SessionManager:
 
     @asynccontextmanager
     async def sesion_activa(self):
-        """Context manager: adquiere lock, cambia estado a PROCESSING, libera al salir."""
+        """Context manager: encola request FIFO, adquiere lock, libera al salir."""
         if self._estado == EstadoSesion.ERROR:
             raise PortalNoDisponibleError(
                 "Sesión en estado ERROR. El servicio no puede procesar requests."
             )
-        async with self._lock:
-            self._estado = EstadoSesion.PROCESSING
-            try:
-                yield
-            except SesionExpiradaError:
-                logger.warning("SessionManager", "SesionExpiradaError durante procesamiento. Re-login inmediato...")
-                await self._re_login()
-                raise
-            finally:
-                self._estado = self._estado if self._estado not in (EstadoSesion.PROCESSING,) else EstadoSesion.ACTIVE
+        if self._pending >= self._max_queue_size:
+            raise ColaSaturadaError(self._max_queue_size)
+        self._pending += 1
+        try:
+            async with self._lock:
+                self._estado = EstadoSesion.PROCESSING
+                try:
+                    yield
+                except SesionExpiradaError:
+                    logger.warning("SessionManager", "SesionExpiradaError durante procesamiento. Re-login inmediato...")
+                    await self._re_login()
+                    raise
+                finally:
+                    self._estado = self._estado if self._estado not in (EstadoSesion.PROCESSING,) else EstadoSesion.ACTIVE
+        finally:
+            self._pending -= 1
 
     @property
     def estado(self) -> EstadoSesion:
         return self._estado
 
-    def lock_ocupado(self) -> bool:
-        return self._lock.locked()
+    @property
+    def pending(self) -> int:
+        return self._pending
 
     # ------------------------------------------------------------------
     # Heartbeat
