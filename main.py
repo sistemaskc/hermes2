@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
     logger.close()
 
 
-app = FastAPI(title="RPA Consultador MetLife", lifespan=lifespan)
+app = FastAPI(title="Hermes KC", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

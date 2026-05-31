@@ -1,9 +1,9 @@
 @echo off
-title RPA Consultador MetLife
+title Hermes KC
 cd /d "%~dp0"
 
 echo ============================================================
-echo  RPA Consultador MetLife
+echo  Hermes KC
 echo  %DATE% %TIME%
 echo ============================================================
 echo.
@@ -54,8 +54,8 @@ if not exist ".venv" (
 
 echo [OK] Verificaciones completadas.
 echo [INFO] Iniciando servidor...
-echo [INFO] API disponible en http://localhost:8000
-echo [INFO] Docs en http://localhost:8000/docs
+echo [INFO] API disponible en http://localhost:5000
+echo [INFO] Docs en http://localhost:5000/docs
 echo [INFO] Ctrl+C para detener.
 echo.
 
