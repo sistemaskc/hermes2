@@ -1,6 +1,6 @@
 from src.application.session_manager import SessionManager
 from src.domain.entities import Captura, ConsultaRequest, Poliza
-from src.domain.exceptions import PortalNoDisponibleError, SesionExpiradaError
+from src.domain.exceptions import PolizaFueraMercadoError, PortalNoDisponibleError, SesionExpiradaError
 from src.domain.ports import ConsultadorPort, StoragePort
 from src.domain.value_objects import TipoIdentificador, expandir_pestanas
 from src.infrastructure.logger import logger
@@ -44,7 +44,12 @@ class ConsultarPolizaUseCase:
             await self._consultador.buscar(request.identificador, request.tipo)
             await self._consultador.confirmar_dialogo()
 
-            numeros = await self._consultador.obtener_polizas_resultado()
+            try:
+                numeros = await self._consultador.obtener_polizas_resultado()
+            except PolizaFueraMercadoError as e:
+                logger.info("ConsultarPolizaUseCase", f"Póliza fuera de mercado: {request.identificador}")
+                ruta_pdf = self._storage.guardar_captura_pdf(request.identificador, e.screenshot)
+                return [Poliza(numero=request.identificador, capturas=[], ruta_pdf=ruta_pdf)]
             logger.info("ConsultarPolizaUseCase", f"Pólizas encontradas: {numeros}")
 
             polizas: list[Poliza] = []

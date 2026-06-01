@@ -1,6 +1,6 @@
 from playwright.async_api import Page
 
-from src.domain.exceptions import PolizaNoEncontradaError
+from src.domain.exceptions import PolizaFueraMercadoError, PolizaNoEncontradaError
 
 
 class ResultsPage:
@@ -12,8 +12,17 @@ class ResultsPage:
     async def obtener_numeros_poliza(self) -> list[str]:
         try:
             await self._page.wait_for_selector(self.XPATH_FILAS_TABLA, timeout=15000)
-        except Exception as e:
-            raise PolizaNoEncontradaError(f"Tabla de resultados no encontrada: {e}") from e
+        except Exception:
+            try:
+                el = self._page.locator("#root > div.container").first
+                box = await el.bounding_box()
+                if box and box["width"] >= 100 and box["height"] >= 100:
+                    screenshot = await el.screenshot()
+                else:
+                    screenshot = await self._page.screenshot(full_page=True)
+            except Exception:
+                screenshot = await self._page.screenshot(full_page=True)
+            raise PolizaFueraMercadoError(screenshot)
 
         filas = await self._page.query_selector_all(self.XPATH_FILAS_TABLA)
         if not filas:

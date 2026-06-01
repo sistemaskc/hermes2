@@ -59,6 +59,22 @@ class LocalStorageAdapter(StoragePort):
         for png in self._tmp.glob(f"{numero_poliza}_*.png"):
             png.unlink(missing_ok=True)
 
+    def guardar_captura_pdf(self, nombre: str, datos: bytes) -> Path:
+        timestamp = int(time.time())
+        nombre_pdf = f"{nombre}_{timestamp}.pdf"
+        tmp_png = self._tmp / f"{nombre}_fuera_mercado.png"
+
+        img = Image.open(io.BytesIO(datos))
+        img = img.convert("L")
+        img.save(tmp_png, format="PNG")
+
+        ruta_final = self._base / nombre_pdf
+        with open(ruta_final, "wb") as f:
+            f.write(img2pdf.convert([str(tmp_png)]))
+
+        tmp_png.unlink(missing_ok=True)
+        return ruta_final
+
     @staticmethod
     def _numero_pagina(ruta: Path) -> int:
         m = re.search(r"_p(\d+)\.png$", ruta.name)
