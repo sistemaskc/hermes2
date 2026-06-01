@@ -32,7 +32,7 @@ class SearchPage:
         try:
             await self._page.wait_for_selector(self.XPATH_BTN_BUSCAR, timeout=10000)
             await self._page.click(self.XPATH_BTN_BUSCAR)
-            await self._page.wait_for_load_state("networkidle")
+            await self._page.wait_for_load_state("networkidle", timeout=90000)
         except Exception as e:
             raise PortalNoDisponibleError(f"Error al hacer click en buscar: {e}") from e
 

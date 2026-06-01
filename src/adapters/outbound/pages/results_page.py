@@ -11,7 +11,7 @@ class ResultsPage:
 
     async def obtener_numeros_poliza(self) -> list[str]:
         try:
-            await self._page.wait_for_selector(self.XPATH_FILAS_TABLA, timeout=15000)
+            await self._page.wait_for_selector(self.XPATH_FILAS_TABLA, timeout=90000)
         except Exception as e:
             raise PolizaNoEncontradaError(f"Tabla de resultados no encontrada: {e}") from e
 
@@ -41,7 +41,7 @@ class ResultsPage:
                 texto = await link.inner_text()
                 if texto.strip() == numero:
                     await link.click()
-                    await self._page.wait_for_load_state("networkidle")
+                    await self._page.wait_for_load_state("networkidle", timeout=90000)
                     return
 
         raise PolizaNoEncontradaError(f"Póliza {numero} no encontrada en resultados")
