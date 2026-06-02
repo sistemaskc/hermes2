@@ -14,3 +14,9 @@ class PolizaNoEncontradaError(Exception):
 class CapturaFallidaError(Exception):
     def __init__(self, numero: str, pestana: str, detalle: str = ""):
         super().__init__(f"Error capturando {pestana} en póliza {numero}. {detalle}")
+
+
+class PolizaFueraMercadoError(Exception):
+    def __init__(self, screenshot: bytes):
+        super().__init__("Póliza no pertenece al mercado")
+        self.screenshot = screenshot

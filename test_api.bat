@@ -3,7 +3,7 @@ title RPA Consultador - Test API
 cd /d "%~dp0"
 
 set HOST=https://hermes2.kc-itservices.net
-@REM set HOST=http://localhost:8000
+@REM set HOST=http://localhost:5000
 
 if not "%~1"=="" (
     set IDENTIFICADOR=%~1

@@ -73,3 +73,6 @@ class StoragePort(ABC):
 
     @abstractmethod
     def limpiar_capturas(self, numero_poliza: str) -> None: ...
+
+    @abstractmethod
+    def guardar_captura_pdf(self, nombre: str, datos: bytes) -> Path: ...
