@@ -49,6 +49,9 @@ class ConsultadorPort(ABC):
     async def tiene_siguiente_pagina(self) -> bool: ...
 
     @abstractmethod
+    async def post_captura(self, pestana: Pestana) -> None: ...
+
+    @abstractmethod
     async def navegar_siguiente_pagina(self) -> None: ...
 
     @abstractmethod

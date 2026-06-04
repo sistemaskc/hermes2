@@ -12,11 +12,15 @@ class Pestana(str, Enum):
     BENEFICIARIOS = "beneficiarios"
     SERVICIOS = "servicios"
     AGENTES = "agentes"
+    SALDOS = "saldos"
+    COBRANZA = "cobranza"
     TODO = "todo"
 
 
 PESTANAS_ORDENADAS = [
     Pestana.GENERAL,
+    Pestana.SALDOS,
+    Pestana.COBRANZA,
     Pestana.COBERTURAS,
     Pestana.BENEFICIARIOS,
     Pestana.SERVICIOS,
