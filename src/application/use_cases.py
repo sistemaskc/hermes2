@@ -86,6 +86,7 @@ class ConsultarPolizaUseCase:
                     await self._consultador.navegar_siguiente_pagina()
                     pagina += 1
                     logger.info("ConsultarPolizaUseCase", f"Pagina {pagina} de {pestana.value} en poliza {numero}")
+                await self._consultador.post_captura(pestana)
             except Exception as e:
                 logger.error("ConsultarPolizaUseCase", f"Error capturando {pestana.value} en poliza {numero}: {e}")
 

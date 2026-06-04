@@ -70,6 +70,10 @@ class PlaywrightConsultadorAdapter(ConsultadorPort):
         page = PolicyPage(self._page)
         return await page.tiene_siguiente_pagina()
 
+    async def post_captura(self, pestana: Pestana) -> None:
+        page = PolicyPage(self._page)
+        await page.post_captura(pestana)
+
     async def navegar_siguiente_pagina(self) -> None:
         page = PolicyPage(self._page)
         await page.navegar_siguiente_pagina()

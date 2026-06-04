@@ -11,6 +11,8 @@ class PolicyPage:
         Pestana.BENEFICIARIOS: 'text=BENEFICIARIOS',
         Pestana.SERVICIOS:     'text=SERVICIOS',
         Pestana.AGENTES:       'text=AGENTES',
+        Pestana.SALDOS:        'text=SALDOS DE LA PÓLIZA',
+        Pestana.COBRANZA:      'text=COBRANZA',
     }
 
     def __init__(self, page: Page):
@@ -18,6 +20,8 @@ class PolicyPage:
 
     SELECTOR_CONTENIDO = "#root > div.container"
     SELECTOR_TABS_FIJAS = ".fixed-bottom"
+    SELECTOR_MODAL_ACTIVO = ".modal.show"
+    SELECTOR_BTN_CERRAR_MODAL = ".modal.show .modal-footer button"
 
     # JS: encuentra el primer <a.page-link> en el li inmediatamente después del li.active
     # Funciona con paginación simple (solo números) y completa (First/Prev/Next/Last)
@@ -92,6 +96,22 @@ class PolicyPage:
                 )
         except Exception as e:
             raise CapturaFallidaError("?", "screenshot", str(e)) from e
+
+    PESTANAS_CON_MODAL = {Pestana.SALDOS}
+    PESTANAS_CON_NAVEGACION = {Pestana.COBRANZA}
+
+    async def post_captura(self, pestana: Pestana) -> None:
+        try:
+            if pestana in self.PESTANAS_CON_MODAL:
+                modal = await self._page.query_selector(self.SELECTOR_MODAL_ACTIVO)
+                if modal:
+                    await self._page.click(self.SELECTOR_BTN_CERRAR_MODAL)
+                    await self._page.wait_for_selector(self.SELECTOR_MODAL_ACTIVO, state="hidden", timeout=5000)
+            elif pestana in self.PESTANAS_CON_NAVEGACION:
+                await self._page.go_back()
+                await self._esperar_contenido_estable()
+        except Exception:
+            pass
 
     async def tiene_siguiente_pagina(self) -> bool:
         try:
