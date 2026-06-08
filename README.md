@@ -96,11 +96,13 @@ curl -X POST http://localhost:8000/consultar \
 | Valor | Descripción |
 |-------|-------------|
 | `"general"` | Información general |
+| `"saldos"` | Saldos de la póliza |
+| `"agentes"` | Agentes |
 | `"coberturas"` | Coberturas |
 | `"beneficiarios"` | Beneficiarios |
 | `"servicios"` | Servicios |
-| `"agentes"` | Agentes |
-| `"todo"` | Expande a las 5 anteriores en orden |
+| `"cobranza"` | Sub-navegación fija: histórico primas, histórico cargos, pagos, información adicional (4 screenshots) |
+| `"todo"` | Expande a todas las anteriores en el orden listado |
 
 ```bash
 # Preview PDF en iframe (default: inline)
