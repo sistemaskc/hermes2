@@ -20,11 +20,11 @@ class Pestana(str, Enum):
 PESTANAS_ORDENADAS = [
     Pestana.GENERAL,
     Pestana.SALDOS,
-    Pestana.AGENTES,
+    Pestana.COBRANZA,
     Pestana.COBERTURAS,
     Pestana.BENEFICIARIOS,
     Pestana.SERVICIOS,
-    Pestana.COBRANZA,
+    Pestana.AGENTES,
 ]
 
 
