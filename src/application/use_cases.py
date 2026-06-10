@@ -77,14 +77,21 @@ class ConsultarPolizaUseCase:
             try:
                 await self._consultador.navegar_pestana(pestana)
                 if pestana == Pestana.COBRANZA:
-                    sub_capturas = await self._consultador.capturar_cobranza()
-                    for i, datos in enumerate(sub_capturas, 1):
+                    imagenes = await self._consultador.capturar_cobranza()
+                    for i, datos in enumerate(imagenes, start=1):
                         ruta = self._storage.guardar_captura(numero, pestana, i, datos)
                         capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
                 else:
-                    datos = await self._consultador.capturar_screenshot()
-                    ruta = self._storage.guardar_captura(numero, pestana, 1, datos)
-                    capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
+                    pagina = 1
+                    while True:
+                        datos = await self._consultador.capturar_screenshot()
+                        ruta = self._storage.guardar_captura(numero, pestana, pagina, datos)
+                        capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
+                        if not await self._consultador.tiene_siguiente_pagina():
+                            break
+                        await self._consultador.navegar_siguiente_pagina()
+                        pagina += 1
+                        logger.info("ConsultarPolizaUseCase", f"Pagina {pagina} de {pestana.value} en poliza {numero}")
                 await self._consultador.post_captura(pestana)
             except Exception as e:
                 logger.error("ConsultarPolizaUseCase", f"Error capturando {pestana.value} en poliza {numero}: {e}")
