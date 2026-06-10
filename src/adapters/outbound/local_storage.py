@@ -8,7 +8,7 @@ import img2pdf
 from PIL import Image
 
 from src.domain.ports import StoragePort
-from src.domain.value_objects import Pestana, PESTANAS_ORDENADAS
+from src.domain.value_objects import Pestana, PESTANAS_ORDENADAS, PESTANAS_PDF
 
 
 class LocalStorageAdapter(StoragePort):
@@ -31,7 +31,7 @@ class LocalStorageAdapter(StoragePort):
 
     def listar_capturas(self, numero_poliza: str) -> list[Path]:
         rutas = []
-        for pestana in PESTANAS_ORDENADAS:
+        for pestana in PESTANAS_PDF:
             paginas = list(self._tmp.glob(f"{numero_poliza}_{pestana.value}_p*.png"))
             paginas.sort(key=lambda p: self._numero_pagina(p))
             rutas.extend(paginas)
