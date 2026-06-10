@@ -1,3 +1,6 @@
+import time
+from pathlib import Path
+
 from playwright.async_api import Page
 
 from src.domain.exceptions import CapturaFallidaError
@@ -122,3 +125,42 @@ class PolicyPage:
     async def navegar_siguiente_pagina(self) -> None:
         await self._page.evaluate(self._JS_CLICK_SIGUIENTE)
         await self._esperar_contenido_estable()
+
+    async def _obtener_html(self, nombre: str = "cobranza") -> Path:
+        html = await self._page.content()
+        ruta = Path("output") / f"{nombre}_{int(time.time())}.html"
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        ruta.write_text(html, encoding="utf-8")
+        return ruta
+
+    async def _click_esperar(self, selector: str) -> None:
+        await self._page.wait_for_selector(selector, timeout=10000)
+        await self._page.click(selector)
+        await self._esperar_contenido_estable()
+
+    async def capturar_cobranza(self) -> list[bytes]:
+        resultados: list[bytes] = []
+
+        await self._click_esperar(".sg-tabs-p [data-rr-ui-event-key='MOVIMIENTOS']")
+
+        # 1. Historico Cargos
+        await self._click_esperar(".sg-tabs-s [data-rr-ui-event-key='histCargos']")
+        resultados.append(await self.capturar_screenshot())
+
+        # 2. Histórico de Primas Enviadas
+        await self._click_esperar(".sg-tabs-s [data-rr-ui-event-key='histPrimEnv']")
+        resultados.append(await self.capturar_screenshot())
+
+        # 3. PAGOS — cerrar modal, esperar filas en tabla
+        await self._click_esperar(".sg-tabs-p [data-rr-ui-event-key='PAGOS']")
+        await self._page.click("xpath=/html/body/div[2]/div/div[6]/button[1]", timeout=10000)
+        await self._page.wait_for_selector(".sg-table-comp-sizepagos tbody tr", timeout=20000)
+        await self._esperar_contenido_estable()
+        resultados.append(await self.capturar_screenshot())
+
+        # 4. DATOS PÓLIZA → Información Adicional
+        await self._click_esperar(".sg-tabs-p [data-rr-ui-event-key='DATOS']")
+        await self._click_esperar(".sg-tabs-s [data-rr-ui-event-key='ADICIONAL']")
+        resultados.append(await self.capturar_screenshot())
+
+        return resultados
