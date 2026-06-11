@@ -100,47 +100,6 @@ class PolicyPage:
     PESTANAS_CON_MODAL = {Pestana.SALDOS}
     PESTANAS_CON_NAVEGACION = {Pestana.COBRANZA}
 
-    # Selectores para sub-navegación de COBRANZA
-    _SEL_TAB_MOVIMIENTOS  = "//*[@id='root']/div[3]/div/div[2]/nav/a[3]"
-    _SEL_TAB_PAGOS        = "//*[@id='root']/div[3]/div/div[2]/nav/a[4]"
-    _SEL_TAB_DATOS        = "//*[@id='root']/div[3]/div/div[2]/nav/a[1]"
-    _XPATH_HISTORICO_PRIMAS  = "//*[@id='root']/div[3]/div/div[2]/div/div/div/div/nav/a[4]"
-    _XPATH_HISTORICO_CARGOS  = "//*[@id='root']/div[3]/div/div[2]/div/div/div/div/nav/a[5]"
-    _XPATH_OK_PAGOS          = "xpath=/html/body/div[2]/div/div[3]/button[1]"
-    _XPATH_INFO_ADICIONAL    = "//*[@id='root']/div[3]/div/div[2]/div/div/div/div[1]/nav/a[5]"
-
-    async def _click_esperar(self, selector: str) -> None:
-        await self._page.wait_for_selector(selector, timeout=10000)
-        await self._page.click(selector)
-        await self._esperar_contenido_estable()
-
-    async def capturar_cobranza(self) -> list[bytes]:
-        resultados: list[bytes] = []
-
-        # MOVIMIENTOS → Histórico de primas
-        await self._click_esperar(self._SEL_TAB_MOVIMIENTOS)
-        await self._click_esperar(self._XPATH_HISTORICO_PRIMAS)
-        resultados.append(await self.capturar_screenshot())
-
-        # MOVIMIENTOS → Histórico de Cargos
-        await self._click_esperar(self._XPATH_HISTORICO_CARGOS)
-        resultados.append(await self.capturar_screenshot())
-
-        # PAGOS → cerrar modal → esperar tabla → screenshot
-        await self._click_esperar(self._SEL_TAB_PAGOS)
-        await self._page.wait_for_selector(self._XPATH_OK_PAGOS, timeout=10000)
-        await self._page.click(self._XPATH_OK_PAGOS)
-        await self._page.wait_for_selector("#root table tbody tr", timeout=20000)
-        await self._esperar_contenido_estable()
-        resultados.append(await self.capturar_screenshot())
-
-        # DATOS PÓLIZA → Información Adicional
-        await self._click_esperar(self._SEL_TAB_DATOS)
-        await self._click_esperar(self._XPATH_INFO_ADICIONAL)
-        resultados.append(await self.capturar_screenshot())
-
-        return resultados
-
     async def post_captura(self, pestana: Pestana) -> None:
         try:
             if pestana in self.PESTANAS_CON_MODAL:

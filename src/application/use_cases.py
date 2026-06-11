@@ -2,7 +2,7 @@ from src.application.session_manager import SessionManager
 from src.domain.entities import Captura, ConsultaRequest, Poliza
 from src.domain.exceptions import PolizaFueraMercadoError, PortalNoDisponibleError, SesionExpiradaError
 from src.domain.ports import ConsultadorPort, StoragePort
-from src.domain.value_objects import Pestana, TipoIdentificador, expandir_pestanas
+from src.domain.value_objects import TipoIdentificador, expandir_pestanas
 from src.infrastructure.logger import logger
 
 
@@ -76,15 +76,16 @@ class ConsultarPolizaUseCase:
             logger.info("ConsultarPolizaUseCase", f"Capturando pestana {pestana.value} de poliza {numero}")
             try:
                 await self._consultador.navegar_pestana(pestana)
-                if pestana == Pestana.COBRANZA:
-                    sub_capturas = await self._consultador.capturar_cobranza()
-                    for i, datos in enumerate(sub_capturas, 1):
-                        ruta = self._storage.guardar_captura(numero, pestana, i, datos)
-                        capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
-                else:
+                pagina = 1
+                while True:
                     datos = await self._consultador.capturar_screenshot()
-                    ruta = self._storage.guardar_captura(numero, pestana, 1, datos)
+                    ruta = self._storage.guardar_captura(numero, pestana, pagina, datos)
                     capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
+                    if not await self._consultador.tiene_siguiente_pagina():
+                        break
+                    await self._consultador.navegar_siguiente_pagina()
+                    pagina += 1
+                    logger.info("ConsultarPolizaUseCase", f"Pagina {pagina} de {pestana.value} en poliza {numero}")
                 await self._consultador.post_captura(pestana)
             except Exception as e:
                 logger.error("ConsultarPolizaUseCase", f"Error capturando {pestana.value} en poliza {numero}: {e}")
