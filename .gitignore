@@ -6,7 +6,6 @@ __pycache__/
 .pytest_cache/
 output/
 logs/
-CLAUDE.md
 TAREAS.md
 *.csv
 tmp/
