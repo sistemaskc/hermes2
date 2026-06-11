@@ -10,7 +10,7 @@ from src.adapters.inbound.schemas import (
     FileDataSchema,
 )
 from src.application.use_cases import ConsultarPolizaUseCase
-from src.config import settings
+from src.config import VERSION, settings
 from src.domain.entities import ConsultaRequest
 from src.domain.exceptions import (
     CapturaFallidaError,
@@ -81,7 +81,7 @@ async def index(request: Request):
 @router.get("/health")
 async def health(request: Request):
     session = request.app.state.session_manager
-    return {"estado": session.estado.value}
+    return {"estado": session.estado.value, "version": VERSION}
 
 
 @router.get("/archivo")

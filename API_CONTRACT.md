@@ -171,7 +171,8 @@ Estado actual de la sesión.
 
 ```json
 {
-  "estado": "ACTIVE"
+  "estado": "ACTIVE",
+  "version": "0.1.2"
 }
 ```
 

@@ -1,6 +1,16 @@
+import tomllib
 from pathlib import Path
 
 from pydantic_settings import BaseSettings
+
+
+def _leer_version() -> str:
+    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    with open(pyproject, "rb") as f:
+        return tomllib.load(f)["project"]["version"]
+
+
+VERSION = _leer_version()
 
 
 class Settings(BaseSettings):
