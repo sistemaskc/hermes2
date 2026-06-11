@@ -106,15 +106,15 @@ curl -X POST http://localhost:8000/consultar \
 
 ```bash
 # Preview PDF en iframe (default: inline)
-GET http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf
+GET http://localhost:8000/archivo?path=output\RLF150_1747123456.pdf
 
 # Forzar descarga
-GET http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf&disposition=attachment
+GET http://localhost:8000/archivo?path=output\RLF150_1747123456.pdf&disposition=attachment
 ```
 
 ```html
 <!-- Embeber PDF en frontend -->
-<iframe src="http://localhost:8000/archivo?path=output\RLF150\RLF150_5512345678.pdf" />
+<iframe src="http://localhost:8000/archivo?path=output\RLF150_1747123456.pdf" />
 ```
 
 El cliente HTTP debe configurar **timeout mínimo de 300s** para `/consultar`. Un RFC con múltiples pólizas puede tardar más.
@@ -123,14 +123,11 @@ El cliente HTTP debe configurar **timeout mínimo de 300s** para `/consultar`. U
 
 ```
 output/
-└── {identificador}/
-    ├── {num_poliza}_general.png
-    ├── {num_poliza}_coberturas.png
-    ├── ...
-    └── {num_poliza}_{telefono}.pdf
+├── {num_poliza}_{unix_timestamp}.pdf
+└── ...
 ```
 
-Las imágenes se guardan en escala de grises. Se genera un PDF por póliza con todas las pestañas capturadas en orden.
+Se genera un PDF por póliza con todas las pestañas capturadas. Las imágenes PNG intermedias (escala de grises) se escriben en `tmp/` y se eliminan automáticamente tras generar el PDF — solo los PDFs persisten.
 
 ## Deploy en Azure VM
 

@@ -66,6 +66,10 @@ class PlaywrightConsultadorAdapter(ConsultadorPort):
         page = PolicyPage(self._page)
         return await page.capturar_screenshot()
 
+    async def capturar_cobranza(self) -> list[bytes]:
+        page = PolicyPage(self._page)
+        return await page.capturar_cobranza()
+
     async def tiene_siguiente_pagina(self) -> bool:
         page = PolicyPage(self._page)
         return await page.tiene_siguiente_pagina()

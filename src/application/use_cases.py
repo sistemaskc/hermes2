@@ -2,7 +2,7 @@ from src.application.session_manager import SessionManager
 from src.domain.entities import Captura, ConsultaRequest, Poliza
 from src.domain.exceptions import PolizaFueraMercadoError, PortalNoDisponibleError, SesionExpiradaError
 from src.domain.ports import ConsultadorPort, StoragePort
-from src.domain.value_objects import TipoIdentificador, expandir_pestanas
+from src.domain.value_objects import Pestana, TipoIdentificador, expandir_pestanas
 from src.infrastructure.logger import logger
 
 

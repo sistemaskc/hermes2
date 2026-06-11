@@ -46,6 +46,9 @@ class ConsultadorPort(ABC):
     async def capturar_screenshot(self) -> bytes: ...
 
     @abstractmethod
+    async def capturar_cobranza(self) -> list[bytes]: ...
+
+    @abstractmethod
     async def tiene_siguiente_pagina(self) -> bool: ...
 
     @abstractmethod
