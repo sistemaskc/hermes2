@@ -76,16 +76,22 @@ class ConsultarPolizaUseCase:
             logger.info("ConsultarPolizaUseCase", f"Capturando pestana {pestana.value} de poliza {numero}")
             try:
                 await self._consultador.navegar_pestana(pestana)
-                pagina = 1
-                while True:
-                    datos = await self._consultador.capturar_screenshot()
-                    ruta = self._storage.guardar_captura(numero, pestana, pagina, datos)
-                    capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
-                    if not await self._consultador.tiene_siguiente_pagina():
-                        break
-                    await self._consultador.navegar_siguiente_pagina()
-                    pagina += 1
-                    logger.info("ConsultarPolizaUseCase", f"Pagina {pagina} de {pestana.value} en poliza {numero}")
+                if pestana == Pestana.COBRANZA:
+                    imagenes = await self._consultador.capturar_cobranza()
+                    for i, datos in enumerate(imagenes, start=1):
+                        ruta = self._storage.guardar_captura(numero, pestana, i, datos)
+                        capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
+                else:
+                    pagina = 1
+                    while True:
+                        datos = await self._consultador.capturar_screenshot()
+                        ruta = self._storage.guardar_captura(numero, pestana, pagina, datos)
+                        capturas.append(Captura(pestana=pestana, ruta_archivo=ruta))
+                        if not await self._consultador.tiene_siguiente_pagina():
+                            break
+                        await self._consultador.navegar_siguiente_pagina()
+                        pagina += 1
+                        logger.info("ConsultarPolizaUseCase", f"Pagina {pagina} de {pestana.value} en poliza {numero}")
                 await self._consultador.post_captura(pestana)
             except Exception as e:
                 logger.error("ConsultarPolizaUseCase", f"Error capturando {pestana.value} en poliza {numero}: {e}")

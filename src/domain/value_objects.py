@@ -27,6 +27,16 @@ PESTANAS_ORDENADAS = [
     Pestana.AGENTES,
 ]
 
+PESTANAS_PDF = [
+    Pestana.GENERAL,
+    Pestana.SALDOS,
+    Pestana.AGENTES,
+    Pestana.COBERTURAS,
+    Pestana.BENEFICIARIOS,
+    Pestana.SERVICIOS,
+    Pestana.COBRANZA,
+]
+
 
 def expandir_pestanas(pestanas: list[Pestana]) -> list[Pestana]:
     if Pestana.TODO in pestanas:
