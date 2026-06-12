@@ -6,7 +6,9 @@ import csv
 import time
 import httpx
 
-BASE_URL = "http://localhost:8000"
+from src.config import settings
+
+BASE_URL = f"http://localhost:{settings.port}"
 TELEFONO = "5512345678"
 TIMEOUT = 300
 

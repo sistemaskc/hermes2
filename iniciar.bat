@@ -46,13 +46,16 @@ if not exist ".venv" (
     echo.
 )
 
-netstat -ano > "%TEMP%\netstat_out.txt" 2>nul
-findstr ":5000 " "%TEMP%\netstat_out.txt" | findstr "LISTENING" > "%TEMP%\puerto5000.txt" 2>nul
-for /f "tokens=5" %%a in (%TEMP%\puerto5000.txt) do taskkill /PID %%a /F >nul 2>&1
-del "%TEMP%\netstat_out.txt" >nul 2>&1
-del "%TEMP%\puerto5000.txt" >nul 2>&1
+for /f "usebackq tokens=1,* delims==" %%A in (`findstr /i "^PORT=" .env 2^>nul`) do set PORT=%%B
+if "%PORT%"=="" set PORT=8000
 
-echo [INFO] Iniciando servidor en http://localhost:5000
+netstat -ano > "%TEMP%\netstat_out.txt" 2>nul
+findstr ":%PORT% " "%TEMP%\netstat_out.txt" | findstr "LISTENING" > "%TEMP%\puerto_activo.txt" 2>nul
+for /f "tokens=5" %%a in (%TEMP%\puerto_activo.txt) do taskkill /PID %%a /F >nul 2>&1
+del "%TEMP%\netstat_out.txt" >nul 2>&1
+del "%TEMP%\puerto_activo.txt" >nul 2>&1
+
+echo [INFO] Iniciando servidor en http://localhost:%PORT%
 echo.
 
 uv run python main.py
