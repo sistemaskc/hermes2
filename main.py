@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.adapters.inbound.api import router
 from src.adapters.outbound.local_storage import LocalStorageAdapter
@@ -41,8 +43,20 @@ async def lifespan(app: FastAPI):
     logger.close()
 
 
+class RestringirDocsMiddleware(BaseHTTPMiddleware):
+    _RUTAS_DOCS = {"/docs", "/redoc", "/openapi.json"}
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        if request.url.path in self._RUTAS_DOCS:
+            host = request.client.host if request.client else ""
+            if host not in ("127.0.0.1", "::1"):
+                return Response(status_code=404)
+        return await call_next(request)
+
+
 app = FastAPI(title="Hermes KC", lifespan=lifespan)
 
+app.add_middleware(RestringirDocsMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
